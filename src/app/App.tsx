@@ -14,10 +14,10 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('today');
   
   const navItems = [
-    { value: 'today', label: 'Today', icon: <Icon name="sun" size={26} /> },
-    { value: 'week', label: 'Week', icon: <Icon name="calendar-days" size={26} /> },
-    { value: 'chores', label: 'Chores', icon: <Icon name="sprout" size={26} /> },
-    { value: 'meals', label: 'Meals', icon: <Icon name="utensils" size={26} /> },
+    { value: 'today', label: 'I dag', icon: <Icon name="sun" size={26} /> },
+    { value: 'week', label: 'Uke', icon: <Icon name="calendar-days" size={26} /> },
+    { value: 'chores', label: 'Gjøremål', icon: <Icon name="sprout" size={26} /> },
+    { value: 'meals', label: 'Måltider', icon: <Icon name="utensils" size={26} /> },
   ];
   
   const renderScreen = () => {
@@ -50,11 +50,12 @@ export default function App() {
           <div style={{ 
             fontFamily: 'var(--font-display)', 
             fontWeight: 'var(--weight-semibold)',
-            fontSize: '20px',
+            fontSize: '16px',
             color: 'var(--text-strong)',
             letterSpacing: '-0.03em',
+            textAlign: 'center',
           }}>
-            Familiar
+            Familiær
           </div>
         }
         footer={
