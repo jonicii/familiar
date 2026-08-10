@@ -59,6 +59,7 @@ export default function TodayScreen() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [lists, setLists] = useState<List[]>([]);
   const [listItems, setListItems] = useState<ListItem[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string}[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Add item states
@@ -105,6 +106,22 @@ export default function TodayScreen() {
           .select('*')
           .eq('list_id', listsRes.data[0].id);
         setListItems(itemsRes.data || []);
+      }
+
+      // Fetch calendar events
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.provider_token) {
+          const calRes = await fetch('/api/calendar', {
+            headers: { Authorization: `Bearer ${session.access_token}` }
+          });
+          if (calRes.ok) {
+            const calData = await calRes.json();
+            setCalendarEvents(calData.events || []);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch calendar:', e);
       }
 
       setLoading(false);
@@ -217,7 +234,36 @@ export default function TodayScreen() {
             <Icon name="calendar-days" size={20} />
             I dag
           </h2>
-          <p style={{ color: 'var(--text-muted)' }}>Koble til Google Kalender for å se hendelser</p>
+          {calendarEvents.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              {calendarEvents.map(event => (
+                <div 
+                  key={event.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-4)',
+                    padding: 'var(--space-3)',
+                    background: 'var(--surface-sunk)',
+                    borderRadius: 'var(--radius-md)',
+                  }}
+                >
+                  <span style={{ 
+                    font: 'var(--type-numeral)', 
+                    color: 'var(--accent)',
+                    minWidth: '50px',
+                  }}>
+                    {event.start.slice(11, 16)}
+                  </span>
+                  <span style={{ flex: 1, font: 'var(--type-body)' }}>
+                    {event.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-muted)' }}>Ingen hendelser i dag</p>
+          )}
         </Card>
 
         <Card>

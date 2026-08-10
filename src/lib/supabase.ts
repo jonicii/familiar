@@ -11,6 +11,7 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: {
       redirectTo: 'https://familiar-ten.vercel.app/auth/callback',
+      scopes: 'https://www.googleapis.com/auth/calendar.readonly',
     },
   });
   return { data, error };
