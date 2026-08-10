@@ -191,13 +191,13 @@ export default function TodayScreen() {
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <p style={{ color: 'var(--text-muted)' }}>Loading...</p>
+        <p style={{ color: 'var(--text-muted)' }}>Laster...</p>
       </div>
     );
   }
 
-  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const greeting = new Date().getHours() < 12 ? 'God morgen' : new Date().getHours() < 18 ? 'God ettermiddag' : 'God kveld';
+  const today = new Date().toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 'var(--space-7)', height: '100%' }}>
@@ -208,39 +208,39 @@ export default function TodayScreen() {
             {greeting}
           </h1>
           <p style={{ font: 'var(--type-body)', color: 'var(--text-muted)' }}>
-            {today} · The Jakobsens
+            {today} · Jakobsen-familien
           </p>
         </div>
 
         <Card>
           <h2 style={{ font: 'var(--type-subtitle)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <Icon name="calendar-days" size={20} />
-            Today
+            I dag
           </h2>
-          <p style={{ color: 'var(--text-muted)' }}>Connect Google Calendar to see events</p>
+          <p style={{ color: 'var(--text-muted)' }}>Koble til Google Kalender for å se hendelser</p>
         </Card>
 
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
             <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               <Icon name="check" size={20} />
-              Tasks
+              Oppgaver
             </h2>
             <Button tone="soft" size="sm" iconLeft={<Icon name="plus" size={16} />} onClick={() => setShowAddTask(!showAddTask)}>
-              Add
+              Legg til
             </Button>
           </div>
 
           {showAddTask && (
             <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
               <Input
-                placeholder="What needs doing?"
+                placeholder="Hva trenger å gjøres?"
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addTask()}
                 style={{ flex: 1 }}
               />
-              <Button onClick={addTask}>Add</Button>
+              <Button onClick={addTask}>Legg til</Button>
             </div>
           )}
 
@@ -277,7 +277,7 @@ export default function TodayScreen() {
               ))}
             </div>
           ) : (
-            <p style={{ color: 'var(--text-muted)' }}>All done. That is the whole list.</p>
+            <p style={{ color: 'var(--text-muted)' }}>Alt ferdig. Det er hele listen.</p>
           )}
         </Card>
       </div>
@@ -288,7 +288,7 @@ export default function TodayScreen() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
             <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               <Icon name="shopping-basket" size={20} />
-              Groceries
+              Handleliste
             </h2>
             <Button tone="ghost" size="sm" iconLeft={<Icon name="plus" size={16} />} onClick={() => setShowAddGrocery(!showAddGrocery)}>
             </Button>
@@ -297,7 +297,7 @@ export default function TodayScreen() {
           {showAddGrocery && (
             <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
               <Input
-                placeholder="Add item..."
+                placeholder="Legg til..."
                 value={newGroceryItem}
                 onChange={(e) => setNewGroceryItem(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addGrocery()}
@@ -338,12 +338,12 @@ export default function TodayScreen() {
               ))}
             </div>
           ) : (
-            <p style={{ color: 'var(--text-muted)' }}>Nothing on the list.</p>
+            <p style={{ color: 'var(--text-muted)' }}>Ingenting på listen.</p>
           )}
 
           {groceryList.length > 0 && (
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: 'var(--border-hair)', font: 'var(--type-caption)', color: 'var(--text-muted)' }}>
-              {groceryList.filter(i => !i.checked).length} left
+              {groceryList.filter(i => !i.checked).length} igjen
             </div>
           )}
         </Card>
@@ -351,18 +351,18 @@ export default function TodayScreen() {
         <Card>
           <h2 style={{ font: 'var(--type-subtitle)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <Icon name="pin" size={20} />
-            Pinned
+            Festet
           </h2>
 
           {showAddNote && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
               <Input
-                placeholder="Write a note..."
+                placeholder="Skriv en notat..."
                 value={newNoteContent}
                 onChange={(e) => setNewNoteContent(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && addNote()}
               />
-              <Button onClick={addNote}>Pin it</Button>
+              <Button onClick={addNote}>Fest det</Button>
             </div>
           )}
 
@@ -371,11 +371,11 @@ export default function TodayScreen() {
               {pinnedNote.content}
             </div>
           ) : (
-            <p style={{ color: 'var(--text-muted)' }}>Nothing pinned.</p>
+            <p style={{ color: 'var(--text-muted)' }}>Ingenting festet.</p>
           )}
 
           <Button tone="ghost" size="sm" iconLeft={<Icon name="plus" size={16} />} onClick={() => setShowAddNote(!showAddNote)} style={{ marginTop: 'var(--space-3)' }}>
-            {showAddNote ? 'Cancel' : 'Add note'}
+            {showAddNote ? 'Avbryt' : 'Legg til notat'}
           </Button>
         </Card>
       </div>
