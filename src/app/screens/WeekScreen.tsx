@@ -16,21 +16,21 @@ const mockWeekData = [
   { day: 'Søn', date: '16', events: [] },
 ];
 
-export default function WeekScreen() {
+export default function WeekScreen({ isMobile = false }: { isMobile?: boolean }) {
   return (
     <div>
       <h1 style={{ 
         font: 'var(--type-title)', 
         color: 'var(--text-strong)',
-        marginBottom: 'var(--space-6)',
+        marginBottom: 'var(--space-4)',
       }}>
         Denne uken
       </h1>
       
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
-        gap: 'var(--space-3)',
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(7, 1fr)', 
+        gap: isMobile ? 'var(--space-3)' : 'var(--space-3)',
       }}>
         {mockWeekData.map((day, index) => (
           <Card 

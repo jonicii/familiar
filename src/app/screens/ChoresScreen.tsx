@@ -31,14 +31,14 @@ const mockChores = [
   },
 ];
 
-export default function ChoresScreen() {
+export default function ChoresScreen({ isMobile = false }: { isMobile?: boolean }) {
   return (
     <div>
       <div style={{ 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',
-        marginBottom: 'var(--space-6)',
+        marginBottom: isMobile ? 'var(--space-4)' : 'var(--space-6)',
       }}>
         <h1 style={{ font: 'var(--type-title)', color: 'var(--text-strong)' }}>
           Gjøremål

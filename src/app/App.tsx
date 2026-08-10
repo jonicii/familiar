@@ -57,9 +57,9 @@ export default function App() {
       case 'today':
         return <TodayScreen isMobile={isMobile} />;
       case 'week':
-        return <WeekScreen />;
+        return <WeekScreen isMobile={isMobile} />;
       case 'chores':
-        return <ChoresScreen />;
+        return <ChoresScreen isMobile={isMobile} />;
       case 'meals':
         return <MealsScreen isMobile={isMobile} />;
       default:
