@@ -23,9 +23,9 @@ const mockShoppingList = [
   { item: 'Salat', category: 'Grønnsaker' },
 ];
 
-export default function MealsScreen() {
+export default function MealsScreen({ isMobile = false }: { isMobile?: boolean }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 'var(--space-7)' }}>
+    <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: isMobile ? 'var(--space-4)' : 'var(--space-7)' }}>
       {/* Left - Meal plan */}
       <div>
         <div style={{ 

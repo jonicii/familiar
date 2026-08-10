@@ -52,7 +52,7 @@ function Bloom({ open, color = 'var(--person-5)', size = 96 }: { open: boolean; 
   );
 }
 
-export default function TodayScreen() {
+export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }) {
   const [householdId, setHouseholdId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -217,7 +217,7 @@ export default function TodayScreen() {
   const today = new Date().toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 'var(--space-7)', height: '100%' }}>
+    <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: isMobile ? 'var(--space-4)' : 'var(--space-7)', height: '100%' }}>
       {/* Left column */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
         <div>

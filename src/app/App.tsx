@@ -15,15 +15,22 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('today');
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Check current session
+    // Check if mobile
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -48,19 +55,18 @@ export default function App() {
   const renderScreen = () => {
     switch (screen) {
       case 'today':
-        return <TodayScreen />;
+        return <TodayScreen isMobile={isMobile} />;
       case 'week':
         return <WeekScreen />;
       case 'chores':
         return <ChoresScreen />;
       case 'meals':
-        return <MealsScreen />;
+        return <MealsScreen isMobile={isMobile} />;
       default:
-        return <TodayScreen />;
+        return <TodayScreen isMobile={isMobile} />;
     }
   };
 
-  // Show loading
   if (loading) {
     return (
       <div style={{
@@ -76,7 +82,6 @@ export default function App() {
     );
   }
 
-  // Show sign in if not logged in
   if (!user) {
     return (
       <div style={{
@@ -89,24 +94,13 @@ export default function App() {
         padding: 'var(--pad-screen)',
       }}>
         <Card style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
-          <h1 style={{ 
-            font: 'var(--type-display)', 
-            color: 'var(--text-strong)',
-            marginBottom: 'var(--space-4)',
-          }}>
+          <h1 style={{ font: 'var(--type-display)', color: 'var(--text-strong)', marginBottom: 'var(--space-4)' }}>
             Familiær
           </h1>
-          <p style={{ 
-            font: 'var(--type-body)', 
-            color: 'var(--text-muted)',
-            marginBottom: 'var(--space-6)',
-          }}>
+          <p style={{ font: 'var(--type-body)', color: 'var(--text-muted)', marginBottom: 'var(--space-6)' }}>
             Logg inn for å koble til din familie
           </p>
-          <Button 
-            onClick={handleSignIn}
-            style={{ width: '100%' }}
-          >
+          <Button onClick={handleSignIn} style={{ width: '100%' }}>
             Logg inn med Google
           </Button>
         </Card>
@@ -114,6 +108,59 @@ export default function App() {
     );
   }
 
+  // Mobile: bottom nav
+  if (isMobile) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100vh', 
+        background: 'var(--surface-page)',
+        fontFamily: 'var(--font-ui)',
+      }}>
+        <main style={{ flex: 1, overflow: 'hidden', padding: 'var(--space-4)' }}>
+          {renderScreen()}
+        </main>
+        
+        {/* Mobile bottom nav */}
+        <nav style={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          padding: 'var(--space-3) var(--space-2)',
+          background: 'var(--surface-card)',
+          borderTop: 'var(--border-hair)',
+        }}>
+          {navItems.map((item) => {
+            const isActive = screen === item.value;
+            return (
+              <button
+                key={item.value}
+                onClick={() => setScreen(item.value as Screen)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 'var(--space-1)',
+                  padding: 'var(--space-2)',
+                  border: 'none',
+                  background: isActive ? 'var(--accent-soft)' : 'transparent',
+                  color: isActive ? 'var(--accent)' : 'var(--text-muted)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  fontSize: '11px',
+                }}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
+
+  // Desktop: side nav
   return (
     <div style={{ 
       display: 'flex', 
@@ -155,11 +202,7 @@ export default function App() {
         }
       />
       
-      <main style={{ 
-        flex: 1, 
-        overflow: 'hidden',
-        padding: 'var(--pad-screen)',
-      }}>
+      <main style={{ flex: 1, overflow: 'hidden', padding: 'var(--pad-screen)' }}>
         {renderScreen()}
       </main>
     </div>
