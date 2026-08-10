@@ -1,9 +1,30 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oyhuiguymzvnqtfslshz.supabase.co';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'sb_publishable_6BOw4YxobjorF-D0Rc3Dbw_g81aiYzK';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Auth helpers
+export async function signInWithGoogle() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://familiar-ten.vercel.app'}/auth/callback`,
+    },
+  });
+  return { data, error };
+}
+
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  return { error };
+}
+
+export async function getSession() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  return { session, error };
+}
 
 export interface Household {
   id: string;
@@ -49,5 +70,4 @@ export interface ListItem {
   checked: boolean;
 }
 
-// Hardcoded for now - will be replaced with auth later
 export const TEST_HOUSEHOLD_INVITE_CODE = 'JAKOBSEN2026';
