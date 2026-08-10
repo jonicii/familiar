@@ -3,17 +3,17 @@
 import React from 'react';
 import { Card, Icon } from '@/components/core';
 
-const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const todayIndex = 0; // Monday
+const weekDays = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+const todayIndex = 0; // Mandag
 
 const mockWeekData = [
-  { day: 'Mon', date: '10', events: ['Swim 16:00', 'Piano 17:30'] },
-  { day: 'Tue', date: '11', events: ['Soccer 15:00'] },
-  { day: 'Wed', date: '12', events: [] },
-  { day: 'Thu', date: '13', events: ['Dentist 10:00'] },
-  { day: 'Fri', date: '14', events: ['Movie night'] },
-  { day: 'Sat', date: '15', events: ['Beach trip', 'BBQ at grandparents'] },
-  { day: 'Sun', date: '16', events: [] },
+  { day: 'Man', date: '10', events: ['Svømming 16:00', 'Piano 17:30'] },
+  { day: 'Tir', date: '11', events: ['Fotball 15:00'] },
+  { day: 'Ons', date: '12', events: [] },
+  { day: 'Tor', date: '13', events: ['Tannlege 10:00'] },
+  { day: 'Fre', date: '14', events: ['Filmkveld'] },
+  { day: 'Lør', date: '15', events: ['Strandtur', 'Grill hos besteforeldre'] },
+  { day: 'Søn', date: '16', events: [] },
 ];
 
 export default function WeekScreen() {
@@ -24,7 +24,7 @@ export default function WeekScreen() {
         color: 'var(--text-strong)',
         marginBottom: 'var(--space-6)',
       }}>
-        This Week
+        Denne uken
       </h1>
       
       <div style={{ 

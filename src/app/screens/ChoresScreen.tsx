@@ -8,25 +8,25 @@ const mockChores = [
     person: 'Nora', 
     color: 'var(--person-3)',
     tasks: [
-      { title: 'Make bed', done: true },
-      { title: 'Feed cat', done: true },
-      { title: 'Homework', done: false },
+      { title: 'Red sengen', done: true },
+      { title: 'Mate katten', done: true },
+      { title: 'Lekser', done: false },
     ]
   },
   { 
     person: 'Mo', 
     color: 'var(--person-4)',
     tasks: [
-      { title: 'Brush teeth', done: true },
-      { title: 'Water plants', done: false },
+      { title: 'Pusse tenner', done: true },
+      { title: 'Vanne planter', done: false },
     ]
   },
   { 
     person: 'Dad', 
     color: 'var(--person-1)',
     tasks: [
-      { title: 'Take out recycling', done: true },
-      { title: 'Grocery shopping', done: false },
+      { title: 'Ta ut resirkulering', done: true },
+      { title: 'Handle inn', done: false },
     ]
   },
 ];
@@ -41,10 +41,10 @@ export default function ChoresScreen() {
         marginBottom: 'var(--space-6)',
       }}>
         <h1 style={{ font: 'var(--type-title)', color: 'var(--text-strong)' }}>
-          Chores
+          Gjøremål
         </h1>
         <Button tone="soft" iconLeft={<Icon name="plus" size={18} />}>
-          Add chore
+          Legg til
         </Button>
       </div>
       
@@ -82,7 +82,7 @@ export default function ChoresScreen() {
                 <div>
                   <div style={{ font: 'var(--type-subtitle)' }}>{person.person}</div>
                   <div style={{ font: 'var(--type-caption)', color: 'var(--text-muted)' }}>
-                    {doneCount}/{person.tasks.length} done
+                    {doneCount}/{person.tasks.length} ferdig
                   </div>
                 </div>
               </div>

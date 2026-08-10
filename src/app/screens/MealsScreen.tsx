@@ -4,23 +4,23 @@ import React from 'react';
 import { Card, Button, Icon } from '@/components/core';
 
 const mockMeals = [
-  { day: 'Monday', meals: { breakfast: 'Cereal', lunch: 'Sandwich', dinner: 'Pasta' } },
-  { day: 'Tuesday', meals: { breakfast: 'Toast', lunch: 'Soup', dinner: 'Tacos' } },
-  { day: 'Wednesday', meals: { breakfast: 'Pancakes', lunch: 'Salad', dinner: 'Pizza' } },
-  { day: 'Thursday', meals: { breakfast: 'Yogurt', lunch: 'Wrap', dinner: 'Curry' } },
-  { day: 'Friday', meals: { breakfast: 'Eggs', lunch: 'Leftovers', dinner: 'Fish & chips' } },
-  { day: 'Saturday', meals: { breakfast: 'Waffles', lunch: '', dinner: 'BBQ' } },
-  { day: 'Sunday', meals: { breakfast: 'Brunch', lunch: '', dinner: 'Roast' } },
+  { day: 'Mandag', meals: { breakfast: 'Kornblanding', lunch: 'Smørbrød', dinner: 'Pasta' } },
+  { day: 'Tirsdag', meals: { breakfast: 'Toast', lunch: 'Suppe', dinner: 'Tacos' } },
+  { day: 'Onsdag', meals: { breakfast: 'Kreps', lunch: 'Salat', dinner: 'Pizza' } },
+  { day: 'Torsdag', meals: { breakfast: 'Yoghurt', lunch: 'Wrap', dinner: 'Curry' } },
+  { day: 'Fredag', meals: { breakfast: 'Egg', lunch: 'Restemat', dinner: 'Fisk & chips' } },
+  { day: 'Lørdag', meals: { breakfast: 'Vafler', lunch: '', dinner: 'Grill' } },
+  { day: 'Søndag', meals: { breakfast: 'Brunch', lunch: '', dinner: 'Stek' } },
 ];
 
 const mockShoppingList = [
-  { item: 'Milk', category: 'Dairy' },
-  { item: 'Bread', category: 'Bakery' },
-  { item: 'Pasta', category: 'Pantry' },
-  { item: 'Tomato sauce', category: 'Pantry' },
-  { item: 'Cheese', category: 'Dairy' },
-  { item: 'Chicken', category: 'Meat' },
-  { item: 'Salad', category: 'Produce' },
+  { item: 'Melk', category: 'Meieriprodukter' },
+  { item: 'Brød', category: 'Bakst' },
+  { item: 'Pasta', category: 'Skafferi' },
+  { item: 'Tomatsaus', category: 'Skafferi' },
+  { item: 'Ost', category: 'Meieriprodukter' },
+  { item: 'Kylling', category: 'Kjøtt' },
+  { item: 'Salat', category: 'Grønnsaker' },
 ];
 
 export default function MealsScreen() {
@@ -35,10 +35,10 @@ export default function MealsScreen() {
           marginBottom: 'var(--space-6)',
         }}>
           <h1 style={{ font: 'var(--type-title)', color: 'var(--text-strong)' }}>
-            Meal Plan
+            Måltidsplan
           </h1>
           <Button tone="soft" iconLeft={<Icon name="plus" size={18} />}>
-            Add meal
+            Legg til
           </Button>
         </div>
         
@@ -101,7 +101,7 @@ export default function MealsScreen() {
               gap: 'var(--space-2)',
             }}>
               <Icon name="shopping-basket" size={20} />
-              Shopping
+              Handleliste
             </h2>
             <Button tone="ghost" size="sm" iconLeft={<Icon name="plus" size={16} />}>
             </Button>
@@ -145,10 +145,10 @@ export default function MealsScreen() {
             marginBottom: 'var(--space-3)',
             color: 'var(--text-muted)',
           }}>
-            Categories
+            Kategorier
           </h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-            {['Dairy', 'Bakery', 'Pantry', 'Meat', 'Produce'].map(cat => (
+            {['Meieriprodukter', 'Bakst', 'Skafferi', 'Kjøtt', 'Grønnsaker'].map(cat => (
               <button
                 key={cat}
                 style={{

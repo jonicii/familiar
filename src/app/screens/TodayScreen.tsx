@@ -303,7 +303,7 @@ export default function TodayScreen() {
                 onKeyDown={(e) => e.key === 'Enter' && addGrocery()}
                 style={{ flex: 1 }}
               />
-              <Button onClick={addGrocery}>Add</Button>
+              <Button onClick={addGrocery}>Legg til</Button>
             </div>
           )}
 
