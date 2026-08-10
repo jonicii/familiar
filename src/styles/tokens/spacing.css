@@ -1,0 +1,30 @@
+:root{
+  --space-0:0px;
+  --space-1:4px;
+  --space-1h:6px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-7:32px;
+  --space-8:40px;
+  --space-9:56px;
+  --space-10:72px;
+  --space-11:96px;
+
+  --pad-chip:6px 12px;
+  --pad-control:12px 20px;
+  --pad-card:20px;
+  --pad-card-lg:28px;
+  --pad-screen:32px;
+  --gap-stack:12px;
+  --gap-section:32px;
+
+  --touch-min:52px;
+  --touch-comfy:60px;
+
+  --rail-width:96px;
+  --panel-width:360px;
+  --content-max:1100px;
+}

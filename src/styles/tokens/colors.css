@@ -1,0 +1,94 @@
+:root{
+  /* ---- Base ramp: warm paper & ink ---- */
+  --cream-50:#FFFCF6;
+  --cream-100:#FDF6EA;
+  --cream-200:#F7EEDF;
+  --cream-300:#EFE3D0;
+  --sand-400:#DFCFB8;
+  --sand-500:#C4B29A;
+  --ink-900:#231F1A;
+  --ink-800:#3A342C;
+  --ink-700:#5A5147;
+  --ink-600:#7B7264;
+  --ink-500:#9A9184;
+
+  /* ---- Brand hues ---- */
+  --terracotta-100:#FBE3DA;
+  --terracotta-300:#F0A78E;
+  --terracotta-500:#DE6242;
+  --terracotta-700:#B24427;
+  --marigold-100:#FDEFCF;
+  --marigold-300:#F8CE72;
+  --marigold-500:#EFA92B;
+  --marigold-700:#C07E10;
+  --sage-100:#DFEBE1;
+  --sage-300:#A6C9AE;
+  --sage-500:#5E9A72;
+  --sage-700:#3E7351;
+  --periwinkle-100:#E2E4FA;
+  --periwinkle-300:#B0B6F0;
+  --periwinkle-500:#6C77DB;
+  --periwinkle-700:#4B55B3;
+  --plum-100:#F2DFEE;
+  --plum-300:#D3A5C9;
+  --plum-500:#A05B93;
+  --plum-700:#7B4070;
+  --sky-100:#D9EEF7;
+  --sky-300:#8FCFE6;
+  --sky-500:#3E9FC4;
+  --sky-700:#26789A;
+
+  /* ---- Semantic: surfaces ---- */
+  --surface-page:var(--cream-100);
+  --surface-card:var(--cream-50);
+  --surface-sunk:var(--cream-200);
+  --surface-inverse:var(--ink-900);
+  --surface-scrim:rgba(35,31,26,.42);
+  --surface-veil:rgba(255,252,246,.72);
+
+  /* ---- Semantic: text ---- */
+  --text-strong:var(--ink-900);
+  --text-body:var(--ink-800);
+  --text-muted:var(--ink-600);
+  --text-faint:var(--ink-500);
+  --text-inverse:var(--cream-50);
+  --text-accent:var(--terracotta-700);
+  --text-link:var(--terracotta-700);
+  --text-link-hover:var(--terracotta-500);
+
+  /* ---- Semantic: lines ---- */
+  --line-hair:rgba(35,31,26,.10);
+  --line-soft:rgba(35,31,26,.16);
+  --line-strong:var(--ink-900);
+
+  /* ---- Semantic: interactive ---- */
+  --accent:var(--terracotta-500);
+  --accent-hover:var(--terracotta-700);
+  --accent-soft:var(--terracotta-100);
+  --accent-contrast:var(--cream-50);
+  --focus-ring:var(--periwinkle-500);
+
+  /* ---- Semantic: status ---- */
+  --ok:var(--sage-500);
+  --ok-soft:var(--sage-100);
+  --warn:var(--marigold-500);
+  --warn-soft:var(--marigold-100);
+  --danger:var(--terracotta-700);
+  --danger-soft:var(--terracotta-100);
+  --info:var(--sky-500);
+  --info-soft:var(--sky-100);
+
+  /* ---- Person colors ---- */
+  --person-1:var(--terracotta-500);
+  --person-1-soft:var(--terracotta-100);
+  --person-2:var(--sage-500);
+  --person-2-soft:var(--sage-100);
+  --person-3:var(--periwinkle-500);
+  --person-3-soft:var(--periwinkle-100);
+  --person-4:var(--marigold-500);
+  --person-4-soft:var(--marigold-100);
+  --person-5:var(--plum-500);
+  --person-5-soft:var(--plum-100);
+  --person-6:var(--sky-500);
+  --person-6-soft:var(--sky-100);
+}

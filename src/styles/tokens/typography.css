@@ -1,0 +1,44 @@
+:root{
+  --font-display:"Bricolage Grotesque","Bricolage Grotesque Fallback",Georgia,serif;
+  --font-ui:"Figtree",-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"DM Mono",ui-monospace,Menlo,monospace;
+
+  --size-3xs:12px;
+  --size-2xs:14px;
+  --size-xs:15px;
+  --size-sm:17px;
+  --size-md:19px;
+  --size-lg:22px;
+  --size-xl:27px;
+  --size-2xl:34px;
+  --size-3xl:44px;
+  --size-4xl:58px;
+  --size-5xl:76px;
+
+  --lh-tight:1.02;
+  --lh-snug:1.16;
+  --lh-normal:1.45;
+  --lh-loose:1.6;
+
+  --tracking-display:-0.025em;
+  --tracking-tight:-0.012em;
+  --tracking-normal:0;
+  --tracking-label:0.08em;
+
+  --weight-light:300;
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+
+  --type-hero:var(--weight-semibold) var(--size-5xl)/var(--lh-tight) var(--font-display);
+  --type-display:var(--weight-semibold) var(--size-4xl)/var(--lh-tight) var(--font-display);
+  --type-title:var(--weight-semibold) var(--size-2xl)/var(--lh-snug) var(--font-display);
+  --type-subtitle:var(--weight-medium) var(--size-lg)/var(--lh-snug) var(--font-display);
+  --type-body:var(--weight-regular) var(--size-sm)/var(--lh-normal) var(--font-ui);
+  --type-body-lg:var(--weight-regular) var(--size-md)/var(--lh-normal) var(--font-ui);
+  --type-ui:var(--weight-medium) var(--size-xs)/1.3 var(--font-ui);
+  --type-caption:var(--weight-regular) var(--size-2xs)/1.35 var(--font-ui);
+  --type-label:var(--weight-medium) var(--size-3xs)/1.2 var(--font-mono);
+  --type-numeral:var(--weight-500) var(--size-lg)/1 var(--font-mono);
+}
