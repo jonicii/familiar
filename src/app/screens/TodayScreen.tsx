@@ -72,6 +72,16 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [newEventEndTime, setNewEventEndTime] = useState('');
   const [addEventLoading, setAddEventLoading] = useState(false);
   const [addEventError, setAddEventError] = useState<string | null>(null);
+
+  // Edit event modal
+  const [editingEvent, setEditingEvent] = useState<{id: string; title: string; start: string; end?: string} | null>(null);
+  const [editEventTitle, setEditEventTitle] = useState('');
+  const [editEventDate, setEditEventDate] = useState('');
+  const [editEventTime, setEditEventTime] = useState('');
+  const [editEventEndTime, setEditEventEndTime] = useState('');
+  const [editEventLoading, setEditEventLoading] = useState(false);
+  const [editEventError, setEditEventError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   
   // Add item states
   const [showAddTask, setShowAddTask] = useState(false);
@@ -227,6 +237,87 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
     setShowAddNote(false);
   };
 
+  const openEditModal = (event: {id: string; title: string; start: string; end?: string}) => {
+    setEditingEvent(event);
+    setEditEventTitle(event.title);
+    const date = event.start.slice(0, 10);
+    const time = event.start.includes('T') ? event.start.slice(11, 16) : '';
+    const endTime = event.end && event.end.includes('T') ? event.end.slice(11, 16) : '';
+    setEditEventDate(date);
+    setEditEventTime(time);
+    setEditEventEndTime(endTime);
+    setEditEventError(null);
+    setConfirmDelete(false);
+  };
+
+  const saveEditedEvent = async () => {
+    if (!editingEvent || !editEventTitle.trim()) return;
+    setEditEventLoading(true);
+    setEditEventError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) {
+        setEditEventError('Ingen Google-tilgang');
+        setEditEventLoading(false);
+        return;
+      }
+
+      const start = editEventTime ? `${editEventDate}T${editEventTime}:00` : editEventDate;
+      const end = editEventTime && editEventEndTime ? `${editEventDate}T${editEventEndTime}:00` : undefined;
+
+      const res = await fetch(`/api/calendar/${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-google-token': session.provider_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ summary: editEventTitle, start, end, calendarId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setEditEventError(data.message || 'Kunne ikke lagre');
+        setEditEventLoading(false);
+        return;
+      }
+
+      setEditingEvent(null);
+      setEditEventLoading(false);
+      await fetchCalendarEvents(calendarId);
+    } catch (e) {
+      setEditEventError('Noe gikk galt');
+      setEditEventLoading(false);
+    }
+  };
+
+  const deleteEvent = async () => {
+    if (!editingEvent) return;
+    setEditEventLoading(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) return;
+
+      const res = await fetch(`/api/calendar/${editingEvent.id}?calendarId=${encodeURIComponent(calendarId)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-google-token': session.provider_token,
+        },
+      });
+
+      if (res.ok || res.status === 204) {
+        setEditingEvent(null);
+        setEditEventLoading(false);
+        await fetchCalendarEvents(calendarId);
+      }
+    } catch (e) {
+      setEditEventLoading(false);
+    }
+  };
+
   const addCalendarEvent = async () => {
     if (!newEventTitle.trim() || !newEventDate) return;
     setAddEventLoading(true);
@@ -379,22 +470,29 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
                             {events.slice(0, 4).map(event => (
-                              <div key={event.id} style={{
-                                font: 'var(--type-caption)',
-                                fontSize: '11px',
-                                padding: '2px 4px',
-                                background: 'var(--surface-card)',
-                                borderRadius: 'var(--radius-xs)',
-                                color: 'var(--text-body)',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                              title={`${event.allDay ? '' : event.start.slice(11, 16) + ' '}${event.title}`}
+                              <button
+                                key={event.id}
+                                onClick={() => openEditModal(event)}
+                                style={{
+                                  font: 'var(--type-caption)',
+                                  fontSize: '11px',
+                                  padding: '2px 4px',
+                                  background: 'var(--surface-card)',
+                                  borderRadius: 'var(--radius-xs)',
+                                  border: '1px solid var(--line-soft)',
+                                  color: 'var(--text-body)',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                  width: '100%',
+                                }}
+                                title={`${event.allDay ? '' : event.start.slice(11, 16) + ' '}${event.title}`}
                               >
                                 {event.allDay ? '' : <span style={{ color: 'var(--accent)', marginRight: '2px' }}>{event.start.slice(11, 16)}</span>}
                                 {event.title}
-                              </div>
+                              </button>
                             ))}
                             {events.length > 4 && (
                               <div style={{ font: 'var(--type-caption)', fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center' }}>
@@ -447,18 +545,28 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
                         {events.length > 0 ? (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', paddingLeft: '32px' }}>
                             {events.map(event => (
-                              <div key={event.id} style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 'var(--space-2)',
-                                font: 'var(--type-body)',
-                                fontSize: '13px',
-                              }}>
+                              <button
+                                key={event.id}
+                                onClick={() => openEditModal(event)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--space-2)',
+                                  font: 'var(--type-body)',
+                                  fontSize: '13px',
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                  textAlign: 'left',
+                                  color: 'var(--text-body)',
+                                }}
+                              >
                                 <span style={{ font: 'var(--type-numeral)', color: 'var(--accent)', minWidth: '40px' }}>
                                   {event.allDay ? '' : event.start.slice(11, 16)}
                                 </span>
                                 <span>{event.title}</span>
-                              </div>
+                              </button>
                             ))}
                           </div>
                         ) : (
@@ -802,6 +910,153 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {editingEvent && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: 'var(--space-4)',
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setEditingEvent(null); }}
+        >
+          <div style={{
+            background: 'var(--surface-card)',
+            borderRadius: 'var(--radius-xl)',
+            padding: 'var(--space-6)',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-5)' }}>
+              <h2 style={{ font: 'var(--type-title)', color: 'var(--text-strong)' }}>
+                {confirmDelete ? 'Slett hendelse?' : 'Rediger hendelse'}
+              </h2>
+              <button onClick={() => setEditingEvent(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 'var(--space-1)' }}>
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+
+            {confirmDelete ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <p style={{ color: 'var(--text-muted)', font: 'var(--type-body)' }}>
+                  Er du sikker på at du vil slette "{editingEvent.title}"?
+                </p>
+                <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+                  <Button tone="ghost" onClick={() => setConfirmDelete(false)}>Avbryt</Button>
+                  <Button
+                    onClick={deleteEvent}
+                    disabled={editEventLoading}
+                    style={{ background: 'var(--destructive)', color: 'white', border: 'none' }}
+                  >
+                    {editEventLoading ? 'Sletter...' : 'Slett'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <Input
+                  placeholder="Hva skjer?"
+                  value={editEventTitle}
+                  onChange={(e) => setEditEventTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && saveEditedEvent()}
+                  autoFocus
+                />
+
+                <div>
+                  <label style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', display: 'block', marginBottom: 'var(--space-1)' }}>
+                    Dato
+                  </label>
+                  <input
+                    type="date"
+                    value={editEventDate}
+                    onChange={(e) => setEditEventDate(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: 'var(--space-2) var(--space-3)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--line-soft)',
+                      background: 'var(--surface-sunk)',
+                      color: 'var(--text-body)',
+                      font: 'var(--type-body)',
+                      fontFamily: 'var(--font-ui)',
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', display: 'block', marginBottom: 'var(--space-1)' }}>
+                      Fra
+                    </label>
+                    <input
+                      type="time"
+                      value={editEventTime}
+                      onChange={(e) => setEditEventTime(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: 'var(--space-2) var(--space-3)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--line-soft)',
+                        background: 'var(--surface-sunk)',
+                        color: 'var(--text-body)',
+                        font: 'var(--type-body)',
+                        fontFamily: 'var(--font-ui)',
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', display: 'block', marginBottom: 'var(--space-1)' }}>
+                      Til
+                    </label>
+                    <input
+                      type="time"
+                      value={editEventEndTime}
+                      onChange={(e) => setEditEventEndTime(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: 'var(--space-2) var(--space-3)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--line-soft)',
+                        background: 'var(--surface-sunk)',
+                        color: 'var(--text-body)',
+                        font: 'var(--type-body)',
+                        fontFamily: 'var(--font-ui)',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {editEventError && (
+                  <p style={{ color: 'var(--destructive)', font: 'var(--type-caption)' }}>{editEventError}</p>
+                )}
+
+                <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'space-between', marginTop: 'var(--space-2)' }}>
+                  <Button
+                    tone="ghost"
+                    onClick={() => setConfirmDelete(true)}
+                    style={{ color: 'var(--destructive)' }}
+                  >
+                    <Icon name="trash" size={14} />
+                    {' '}Slett
+                  </Button>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <Button tone="ghost" onClick={() => setEditingEvent(null)}>Avbryt</Button>
+                    <Button onClick={saveEditedEvent} disabled={editEventLoading}>
+                      {editEventLoading ? 'Lagrer...' : 'Lagre'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
