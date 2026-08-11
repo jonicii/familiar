@@ -83,11 +83,22 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
     loadEvents();
   }, [year, month]);
 
+  const toOsloYMD = (d: Date) => {
+    const ms = d.getTime() + 2 * 60 * 60 * 1000;
+    const u = new Date(ms);
+    return `${u.getUTCFullYear()}-${String(u.getUTCMonth() + 1).padStart(2, '0')}-${String(u.getUTCDate()).padStart(2, '0')}`;
+  };
+
   const getEventsForDay = (date: Date) => {
-    const dateStr = date.toISOString().slice(0, 10);
+    const dateStr = toOsloYMD(date);
     return events.filter(e => {
-      const eventDate = e.start?.slice(0, 10);
-      return eventDate === dateStr;
+      if (e.allDay || !e.start?.includes('T')) {
+        return e.start?.slice(0, 10) === dateStr;
+      }
+      const osloMs = new Date(e.start).getTime() + 2 * 60 * 60 * 1000;
+      const osloU = new Date(osloMs);
+      const eventDateStr = `${osloU.getUTCFullYear()}-${String(osloU.getUTCMonth() + 1).padStart(2, '0')}-${String(osloU.getUTCDate()).padStart(2, '0')}`;
+      return eventDateStr === dateStr;
     });
   };
 
@@ -100,7 +111,7 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
   let startWeekday = firstDayOfMonth.getDay() - 1;
   if (startWeekday < 0) startWeekday = 6;
 
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = toOsloYMD(today);
 
   // Build weeks array
   const weeks: Date[][] = [];
@@ -116,7 +127,7 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
   }
 
   const isCurrentMonth = (date: Date) => date.getMonth() === month;
-  const isToday = (date: Date) => date.toISOString().slice(0, 10) === todayStr;
+  const isToday = (date: Date) => toOsloYMD(date) === todayStr;
 
   const prevMonth = () => setMonthOffset(o => o - 1);
   const nextMonth = () => setMonthOffset(o => o + 1);

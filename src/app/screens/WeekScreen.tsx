@@ -50,6 +50,12 @@ export default function WeekScreen({ isMobile = false }: { isMobile?: boolean })
     loadEvents();
   }, []);
 
+  const toOsloYMD = (d: Date) => {
+    const ms = d.getTime() + 2 * 60 * 60 * 1000;
+    const u = new Date(ms);
+    return `${u.getUTCFullYear()}-${String(u.getUTCMonth() + 1).padStart(2, '0')}-${String(u.getUTCDate()).padStart(2, '0')}`;
+  };
+
   // Build current week (Monday to Sunday)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -61,16 +67,25 @@ export default function WeekScreen({ isMobile = false }: { isMobile?: boolean })
   const weekData = Array.from({ length: 7 }, (_, i) => {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
-    const dateStr = day.toISOString().slice(0, 10);
+    const dateStr = toOsloYMD(day);
+    const dayEvents = events.filter(e => {
+      if (e.allDay || !e.start?.includes('T')) {
+        return e.start?.slice(0, 10) === dateStr;
+      }
+      const osloMs = new Date(e.start).getTime() + 2 * 60 * 60 * 1000;
+      const osloU = new Date(osloMs);
+      const eventDateStr = `${osloU.getUTCFullYear()}-${String(osloU.getUTCMonth() + 1).padStart(2, '0')}-${String(osloU.getUTCDate()).padStart(2, '0')}`;
+      return eventDateStr === dateStr;
+    });
     return {
       date: day,
       dateStr,
       dayLabel: weekDays[i],
-      events: events.filter(e => e.start?.slice(0, 10) === dateStr),
+      events: dayEvents,
     };
   });
 
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = toOsloYMD(today);
 
   const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
 

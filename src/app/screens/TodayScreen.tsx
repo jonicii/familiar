@@ -446,9 +446,15 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
             </div>
           ) : (
             (() => {
+              const toOsloYMD = (d: Date) => {
+                const ms = d.getTime() + 2 * 60 * 60 * 1000;
+                const u = new Date(ms);
+                return `${u.getUTCFullYear()}-${String(u.getUTCMonth() + 1).padStart(2, '0')}-${String(u.getUTCDate()).padStart(2, '0')}`;
+              };
+
               const today = new Date();
               today.setHours(0, 0, 0, 0);
-              const todayStr = today.toISOString().slice(0, 10);
+              const todayStr = toOsloYMD(today);
               const dayOfWeek = today.getDay();
               const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
               const monday = new Date(today);
@@ -458,17 +464,18 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
               const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
 
               const getEventsForDay = (date: Date) => {
-                const dateStr = date.toISOString().slice(0, 10);
+                const dateStr = toOsloYMD(date);
                 return calendarEvents.filter(e => {
                   if (e.allDay || !e.start?.includes('T')) {
-                    // All-day: compare UTC date strings directly
+                    // All-day: compare UTC date strings
                     return e.start?.slice(0, 10) === dateStr;
                   } else {
-                    // Timed event: convert to Oslo date for correct day display
-                    // e.g. "2026-08-14T06:00:00.000Z" (UTC) → "2026-08-14" (Oslo, UTC+2)
+                    // Timed: event UTC time → add 2h → Oslo date for comparison
                     const utcDate = new Date(e.start);
-                    const osloDate = new Date(utcDate.getTime() + 2 * 60 * 60 * 1000);
-                    return osloDate.toISOString().slice(0, 10) === dateStr;
+                    const osloMs = utcDate.getTime() + 2 * 60 * 60 * 1000;
+                    const osloU = new Date(osloMs);
+                    const eventDateStr = `${osloU.getUTCFullYear()}-${String(osloU.getUTCMonth() + 1).padStart(2, '0')}-${String(osloU.getUTCDate()).padStart(2, '0')}`;
+                    return eventDateStr === dateStr;
                   }
                 });
               };
@@ -480,7 +487,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
                     {Array.from({ length: 7 }, (_, i) => {
                       const day = new Date(monday);
                       day.setDate(monday.getDate() + i);
-                      const dayStr = day.toISOString().slice(0, 10);
+                      const dayStr = toOsloYMD(day);
                       const isToday = dayStr === todayStr;
                       const events = getEventsForDay(day);
                       return (
