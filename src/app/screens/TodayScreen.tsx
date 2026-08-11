@@ -346,7 +346,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
       if (!res.ok) {
         const data = await res.json();
-        setAddEventError(data.message || 'Kunne ikke opprette hendelse');
+        setAddEventError(data.message || data.error || `Feil (${res.status})`);
         setAddEventLoading(false);
         return;
       }
