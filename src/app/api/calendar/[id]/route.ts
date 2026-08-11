@@ -44,10 +44,18 @@ export async function PATCH(
     }
     if (end !== undefined) {
       if (!end.includes('T')) {
-        updatePayload.end = { date: end };
+        // All-day: omit end if same as start (single-day)
+        if (end !== start) {
+          updatePayload.end = { date: end };
+        }
       } else {
-        const endDt = new Date(end + osloOffset);
-        updatePayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
+        // Timed: omit end if same calendar day as start (single-day)
+        const startDateOnly = start || '';
+        const endDateOnly = end.slice(0, 10);
+        if (endDateOnly !== startDateOnly) {
+          const endDt = new Date(end + osloOffset);
+          updatePayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
+        }
       }
     }
 

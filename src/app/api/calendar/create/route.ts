@@ -44,19 +44,30 @@ export async function POST(request: Request) {
       
       if (end) {
         const endDate = end.includes('T') ? end.slice(0, 10) : end;
-        eventPayload.end = { date: endDate };
+        if (endDate !== startDate) {
+          // Multi-day: include end so Google spans the full range
+          eventPayload.end = { date: endDate };
+        }
+        // Single-day (same start/end): omit end — Google shows 1-day event on correct date
       }
     } else {
       // Timed: append Oslo timezone offset so Date() parses as Oslo time, not UTC
       // Vercel server runs in UTC, so "2026-08-14T08:00" would otherwise be interpreted as UTC
       const osloOffset = '+02:00'; // August = DST (CEST = UTC+2)
       const startDt = new Date(start + osloOffset);
+      const startDateOnly = start.slice(0, 10);
       
       eventPayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       
       if (end) {
         const endDt = new Date(end + osloOffset);
-        eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
+        const endDateOnly = end.slice(0, 10);
+        if (endDateOnly !== startDateOnly) {
+          // Multi-day or overnight: include end so Google shows full span
+          eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
+        }
+        // Same calendar day (same start/end date): omit end for single-day event
+        // Including end on same date makes Google show "to next day" → shifts date
       } else {
         const defaultEnd = new Date(start + osloOffset);
         defaultEnd.setHours(defaultEnd.getHours() + 1);
