@@ -67,7 +67,7 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
 
         if (!res.ok) {
           const data = await res.json();
-          setCalendarError(data.hint || data.error || 'Klarte ikke å hente kalender');
+          setCalendarError(data.message || data.error || `Kalenderfeil (${data.status})`);
           setLoading(false);
           return;
         }

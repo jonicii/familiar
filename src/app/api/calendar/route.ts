@@ -69,7 +69,13 @@ export async function GET(request: Request) {
 
     if (!calendarResponse.ok) {
       const errorText = await calendarResponse.text();
-      return NextResponse.json({ error: 'Failed to fetch calendar', details: errorText }, { status: calendarResponse.status });
+      const errorJson = JSON.parse(errorText);
+      return NextResponse.json({
+        error: 'Google Calendar API error',
+        status: calendarResponse.status,
+        message: errorJson?.error?.message || errorText,
+        calendarId,
+      }, { status: calendarResponse.status });
     }
 
     const calendarData = await calendarResponse.json();

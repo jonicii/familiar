@@ -125,7 +125,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           if (calRes.ok) {
             setCalendarEvents(calData.events || []);
           } else {
-            setCalendarError(calData.hint || calData.error || 'Klarte ikke å hente kalender');
+            setCalendarError(calData.message || calData.error || `Kalenderfeil`);
           }
         } else {
           setCalendarError('Ingen Google-tilgang — logg ut og inn igjen');
