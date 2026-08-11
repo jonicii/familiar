@@ -346,7 +346,11 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
       if (!res.ok) {
         const data = await res.json();
-        setAddEventError(data.message || data.error || `Feil (${res.status})`);
+        setAddEventError(
+          (data.message || `Feil (${res.status})`) +
+          (data.payloadSent ? `\nPayload: ${JSON.stringify(data.payloadSent)}` : '') +
+          (data.input ? `\nInput: ${JSON.stringify(data.input)}` : '')
+        );
         setAddEventLoading(false);
         return;
       }

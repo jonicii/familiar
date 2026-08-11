@@ -94,11 +94,22 @@ export async function POST(request: Request) {
         const errorJson = JSON.parse(errorText);
         message = errorJson?.error?.message || errorText;
       } catch (_) {}
-      return NextResponse.json({ error: 'Failed to create event', message }, { status: response.status });
+      return NextResponse.json({
+        error: 'Failed to create event',
+        message,
+        status: response.status,
+        payloadSent: eventPayload,
+        input: { summary, start, end, calId },
+      }, { status: response.status });
     }
 
     const event = await response.json();
-    return NextResponse.json({ success: true, event });
+    return NextResponse.json({
+      success: true,
+      event,
+      payloadSent: eventPayload,
+      input: { summary, start, end },
+    });
   } catch (error) {
     console.error('Calendar create error:', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
