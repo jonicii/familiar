@@ -717,33 +717,16 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
         {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
-        {/* Today's meal */}
+        {/* Today's dinner */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               <Icon name="utensils" size={20} />
-              I dag
+              Middag
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)' }}>
-            {[
-              { label: 'Frokost', key: 'breakfast' as const },
-              { label: 'Lunsj', key: 'lunch' as const },
-              { label: 'Middag', key: 'dinner' as const },
-            ].map(({ label, key }) => {
-              const todaysMeals = mockMeals[dayOfWeek];
-              const meal = todaysMeals?.meals[key];
-              return (
-                <div key={key}>
-                  <div style={{ font: 'var(--type-caption)', color: 'var(--text-faint)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {label}
-                  </div>
-                  <div style={{ font: 'var(--type-body)', color: key === 'dinner' ? 'var(--text-strong)' : 'var(--text-body)' }}>
-                    {meal || '—'}
-                  </div>
-                </div>
-              );
-            })}
+          <div style={{ marginTop: 'var(--space-3)', font: 'var(--type-body)', color: 'var(--text-strong)' }}>
+            {mockMeals[dayOfWeek]?.meals.dinner || 'Ingenting planlagt'}
           </div>
         </Card>
 
