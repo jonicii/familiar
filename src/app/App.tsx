@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { NavRail } from '@/components/navigation';
 import { Icon, Button, Card } from '@/components/core';
-import { supabase, signInWithGoogle } from '@/lib/supabase';
+import { supabase, signInWithGoogle, signOut } from '@/lib/supabase';
 import TodayScreen from '@/app/screens/TodayScreen';
 import WeekScreen from '@/app/screens/WeekScreen';
 import ChoresScreen from '@/app/screens/ChoresScreen';
@@ -43,6 +43,10 @@ export default function App() {
     if (error) {
       console.error('Sign in error:', error);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
   };
 
   const navItems = [
@@ -155,6 +159,25 @@ export default function App() {
               </button>
             );
           })}
+          <button
+            onClick={handleSignOut}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 'var(--space-1)',
+              padding: 'var(--space-2)',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              borderRadius: 'var(--radius-md)',
+              cursor: 'pointer',
+              fontSize: '11px',
+            }}
+          >
+            <Icon name="settings" size={26} />
+            <span>Innst.</span>
+          </button>
         </nav>
       </div>
     );
@@ -185,18 +208,21 @@ export default function App() {
           </div>
         }
         footer={
-          <button style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '100%',
-            padding: 'var(--space-3)',
-            borderRadius: 'var(--radius-md)',
-            border: 'none',
-            background: 'transparent',
-            color: 'var(--text-muted)',
-            cursor: 'pointer',
-          }}>
+          <button
+            onClick={handleSignOut}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              padding: 'var(--space-3)',
+              borderRadius: 'var(--radius-md)',
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+            }}
+          >
             <Icon name="settings" size={22} />
           </button>
         }
