@@ -37,7 +37,7 @@ export async function PATCH(
       if (isAllDay) {
         updatePayload.start = { date: start };
       } else {
-        const startDt = new Date(`${start}:00+02:00`);
+        const startDt = new Date(start);
         updatePayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }
@@ -45,7 +45,7 @@ export async function PATCH(
       if (!end.includes('T')) {
         updatePayload.end = { date: end };
       } else {
-        const endDt = new Date(`${end}:00+02:00`);
+        const endDt = new Date(end);
         updatePayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }

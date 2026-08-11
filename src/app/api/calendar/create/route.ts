@@ -47,17 +47,19 @@ export async function POST(request: Request) {
         eventPayload.end = { date: endDate };
       }
     } else {
-      // Timed event: construct ISO string as Oslo time to avoid UTC shift
-      const startDt = new Date(`${start}:00+02:00`);
+      // Timed: Date() parses local datetime as Oslo time; toISOString() → UTC
+      // e.g. "2026-08-14T16:00:00" → "2026-08-14T14:00:00.000Z" (UTC)
+      // Google sees 14:00 UTC → converts to 16:00 Oslo (correct)
+      const startDt = new Date(start);
       eventPayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       
       if (end) {
-        const endDt = new Date(`${end}:00+02:00`);
+        const endDt = new Date(end);
         eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       } else {
-        // Default end = start + 1 hour
-        startDt.setHours(startDt.getHours() + 1);
-        eventPayload.end = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
+        const endDt = new Date(start);
+        endDt.setHours(endDt.getHours() + 1);
+        eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }
 
