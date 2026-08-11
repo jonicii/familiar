@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     const weeksParam = url.searchParams.get('weeks');
     const startParam = url.searchParams.get('start');
     const endParam = url.searchParams.get('end');
+    const calendarId = url.searchParams.get('calendarId') || 'primary';
 
     let startOfRange: string;
     let endOfRange: string;
@@ -56,7 +57,6 @@ export async function GET(request: Request) {
     }
 
     // Fetch calendar events from Google Calendar API
-    const calendarId = url.searchParams.get('calendarId') || 'primary';
     const calendarResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${encodeURIComponent(startOfRange)}&timeMax=${encodeURIComponent(endOfRange)}&singleEvents=true&orderBy=startTime`,
       {
@@ -69,12 +69,17 @@ export async function GET(request: Request) {
 
     if (!calendarResponse.ok) {
       const errorText = await calendarResponse.text();
-      const errorJson = JSON.parse(errorText);
+      let message = errorText;
+      try {
+        const errorJson = JSON.parse(errorText);
+        message = errorJson?.error?.message || errorJson?.message || errorText;
+      } catch (_) {}
       return NextResponse.json({
         error: 'Google Calendar API error',
         status: calendarResponse.status,
-        message: errorJson?.error?.message || errorText,
+        message,
         calendarId,
+        url: `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
       }, { status: calendarResponse.status });
     }
 
