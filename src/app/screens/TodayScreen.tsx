@@ -415,20 +415,38 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const dayOfWeek = new Date().getDay(); // 0=Sun, 1=Mon ...
 
   return (
-    <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: isMobile ? 'var(--space-4)' : 'var(--space-7)', height: '100%' }}>
-      {/* Left column */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-        <div>
-          <h1 style={{ font: 'var(--type-display)', color: 'var(--text-strong)', marginBottom: 'var(--space-1)' }}>
-            {greeting}
-          </h1>
-          <p style={{ font: 'var(--type-body)', color: 'var(--text-muted)' }}>
-            {today} · Jakobsen-familien
-          </p>
-        </div>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      height: '100%',
+      overflow: 'auto',
+      padding: 'var(--space-7) var(--space-5)',
+    }}>
+      {/* Greeting — full width */}
+      <div style={{ width: '100%', maxWidth: '900px', marginBottom: 'var(--space-6)' }}>
+        <h1 style={{ font: 'var(--type-display)', color: 'var(--text-strong)', marginBottom: 'var(--space-1)' }}>
+          {greeting}
+        </h1>
+        <p style={{ font: 'var(--type-body)', color: 'var(--text-muted)' }}>
+          {today} · Jakobsen-familien
+        </p>
+      </div>
 
-        {/* Week calendar card */}
-        <Card>
+      {/* 2-column grid: left = calendar + tasks; right = meals + handleliste + festet */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: 'var(--space-5)',
+        width: '100%',
+        maxWidth: '900px',
+        alignItems: 'start',
+      }}>
+        {/* Left column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+
+          {/* Week calendar card */}
+          <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
             <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               <Icon name="calendar-days" size={20} />
@@ -634,6 +652,71 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           )}
         </Card>
 
+        {/* Tasks */}
+        <Card>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+            <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <Icon name="check" size={20} />
+              Oppgaver
+            </h2>
+            <Button tone="soft" size="sm" iconLeft={<Icon name="plus" size={16} />} onClick={() => setShowAddTask(!showAddTask)}>
+              Legg til
+            </Button>
+          </div>
+
+          {showAddTask && (
+            <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
+              <Input
+                placeholder="Hva trenger å gjøres?"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                style={{ flex: 1 }}
+              />
+              <Button onClick={addTask}>Legg til</Button>
+            </div>
+          )}
+
+          {incompleteTasks.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+              {incompleteTasks.map(task => (
+                <div key={task.id} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => toggleTask(task.id, task.completed)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-3)',
+                      padding: 'var(--space-3)',
+                      background: 'transparent',
+                      border: 'none',
+                      borderRadius: 'var(--radius-md)',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      width: '100%',
+                    }}
+                  >
+                    <span style={{ width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', border: '2px solid var(--line-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    </span>
+                    <span style={{ flex: 1, font: 'var(--type-body)' }}>{task.title}</span>
+                    {task.assigned_to && (
+                      <span style={{ font: 'var(--type-caption)', padding: 'var(--pad-chip)', background: `${getMemberColor(task.assigned_to)}22`, color: getMemberColor(task.assigned_to), borderRadius: 'var(--radius-pill)' }}>
+                        {getMemberName(task.assigned_to)}
+                      </span>
+                    )}
+                  </button>
+                  {justCompleted === task.id && <Bloom open={true} size={60} />}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-muted)' }}>Alt ferdig.</p>
+          )}
+        </Card>
+        </div>
+
+        {/* Right column */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
         {/* Today's meal */}
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
@@ -818,6 +901,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
             {showAddNote ? 'Avbryt' : 'Legg til notat'}
           </Button>
         </Card>
+        </div>
       </div>
 
       {/* Add Event Modal */}
