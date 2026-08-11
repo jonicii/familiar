@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Get the user's session from the Authorization header
     const authHeader = new Headers().get('Authorization');
@@ -30,14 +30,28 @@ export async function GET() {
       return NextResponse.json({ error: 'No Google access token' }, { status: 400 });
     }
 
-    // Get today's date range
+    // Get weeks param (default 4)
+    const url = new URL(request.url);
+    const weeks = parseInt(url.searchParams.get('weeks') || '4', 10);
+
+    // Get current week's Monday as start
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59).toISOString();
+    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
+    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - daysFromMonday);
+    monday.setHours(0, 0, 0, 0);
+
+    // End date: Monday + weeks * 7 days
+    const endDate = new Date(monday);
+    endDate.setDate(monday.getDate() + weeks * 7);
+
+    const startOfRange = monday.toISOString();
+    const endOfRange = endDate.toISOString();
 
     // Fetch calendar events from Google Calendar API
     const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(startOfDay)}&timeMax=${encodeURIComponent(endOfDay)}&singleEvents=true&orderBy=startTime`,
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(startOfRange)}&timeMax=${encodeURIComponent(endOfRange)}&singleEvents=true&orderBy=startTime`,
       {
         headers: {
           'Authorization': `Bearer ${providerToken}`,
@@ -59,9 +73,14 @@ export async function GET() {
       title: event.summary,
       start: event.start.dateTime || event.start.date,
       end: event.end.dateTime || event.end.date,
+      allDay: !event.start.dateTime,
     }));
 
-    return NextResponse.json({ events });
+    return NextResponse.json({
+      events,
+      weekStart: monday.toISOString(),
+      weeks,
+    });
   } catch (error) {
     console.error('Calendar API error:', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

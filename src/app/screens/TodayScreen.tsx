@@ -59,7 +59,8 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [tasks, setTasks] = useState<Task[]>([]);
   const [lists, setLists] = useState<List[]>([]);
   const [listItems, setListItems] = useState<ListItem[]>([]);
-  const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string}[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string; allDay?: boolean}[]>([]);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Add item states
@@ -108,11 +109,11 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
         setListItems(itemsRes.data || []);
       }
 
-      // Fetch calendar events
+      // Fetch calendar events (4 weeks)
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.provider_token) {
-          const calRes = await fetch('/api/calendar', {
+          const calRes = await fetch('/api/calendar?weeks=4', {
             headers: { Authorization: `Bearer ${session.access_token}` }
           });
           if (calRes.ok) {
@@ -232,38 +233,168 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
         <Card>
           <h2 style={{ font: 'var(--type-subtitle)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <Icon name="calendar-days" size={20} />
-            I dag
+            Kalender
           </h2>
-          {calendarEvents.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-              {calendarEvents.map(event => (
-                <div 
-                  key={event.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-4)',
-                    padding: 'var(--space-3)',
-                    background: 'var(--surface-sunk)',
-                    borderRadius: 'var(--radius-md)',
-                  }}
-                >
-                  <span style={{ 
-                    font: 'var(--type-numeral)', 
-                    color: 'var(--accent)',
-                    minWidth: '50px',
-                  }}>
-                    {event.start.slice(11, 16)}
-                  </span>
-                  <span style={{ flex: 1, font: 'var(--type-body)' }}>
-                    {event.title}
-                  </span>
+
+          {/* 4-week grid */}
+          {(() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().slice(0, 10);
+
+            // Build 4 weeks starting from current week's Monday
+            const dayOfWeek = today.getDay();
+            const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - daysFromMonday);
+
+            const weeks: Date[][] = [];
+            for (let w = 0; w < 4; w++) {
+              const week: Date[] = [];
+              for (let d = 0; d < 7; d++) {
+                const day = new Date(monday);
+                day.setDate(monday.getDate() + w * 7 + d);
+                week.push(day);
+              }
+              weeks.push(week);
+            }
+
+            const dayLabels = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+            const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+
+            const getEventsForDay = (date: Date) => {
+              const dateStr = date.toISOString().slice(0, 10);
+              return calendarEvents.filter(e => e.start?.slice(0, 10) === dateStr);
+            };
+
+            const isToday = (date: Date) => date.toISOString().slice(0, 10) === todayStr;
+            const isSelected = (date: Date) => date.toISOString().slice(0, 10) === selectedDay;
+            const isPast = (date: Date) => date < today;
+
+            return (
+              <div>
+                {/* Week labels */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: 'var(--space-2)' }}>
+                  {dayLabels.map(d => (
+                    <div key={d} style={{ textAlign: 'center', font: 'var(--type-caption)', color: 'var(--text-faint)', fontSize: '10px' }}>{d}</div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: 'var(--text-muted)' }}>Ingen hendelser i dag</p>
-          )}
+
+                {/* Weeks */}
+                {weeks.map((week, wi) => {
+                  const showMonthLabel = week[0].getMonth() !== (weeks[wi - 1]?.[0]?.getMonth() ?? -1);
+                  return (
+                    <div key={wi}>
+                      {/* Month label for first week */}
+                      {showMonthLabel && (
+                        <div style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', marginBottom: '2px', marginTop: wi > 0 ? 'var(--space-2)' : 0 }}>
+                          {monthLabels[week[0].getMonth()]} {week[0].getFullYear()}
+                        </div>
+                      )}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px' }}>
+                        {week.map((day) => {
+                          const events = getEventsForDay(day);
+                          const todayCell = isToday(day);
+                          const selected = isSelected(day);
+                          const past = isPast(day);
+                          return (
+                            <button
+                              key={day.toISOString()}
+                              onClick={() => setSelectedDay(day.toISOString().slice(0, 10))}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                padding: '4px 2px',
+                                borderRadius: 'var(--radius-sm)',
+                                border: selected ? '1.5px solid var(--accent)' : todayCell ? '1.5px solid var(--accent-soft)' : '1.5px solid transparent',
+                                background: selected ? 'var(--accent-soft)' : todayCell ? 'var(--surface-sunk)' : 'transparent',
+                                cursor: 'pointer',
+                                minHeight: '44px',
+                              }}
+                            >
+                              <span style={{
+                                font: 'var(--type-numeral)',
+                                fontSize: '13px',
+                                color: todayCell ? 'var(--accent)' : past ? 'var(--text-faint)' : 'var(--text-body)',
+                              }}>
+                                {day.getDate()}
+                              </span>
+                              {events.length > 0 && (
+                                <div style={{ display: 'flex', gap: '2px', marginTop: '2px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                                  {events.slice(0, 3).map((_, i) => (
+                                    <span key={i} style={{
+                                      width: '4px',
+                                      height: '4px',
+                                      borderRadius: '50%',
+                                      background: 'var(--accent)',
+                                      display: 'inline-block',
+                                    }} />
+                                  ))}
+                                  {events.length > 3 && (
+                                    <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>+{events.length - 3}</span>
+                                  )}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Selected day events */}
+                {selectedDay && (() => {
+                  const dayEvents = calendarEvents.filter(e => e.start?.slice(0, 10) === selectedDay);
+                  const selDate = new Date(selectedDay + 'T12:00:00');
+                  const selLabel = selDate.toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
+                  return (
+                    <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: 'var(--border-hair)' }}>
+                      <div style={{ font: 'var(--type-label)', color: 'var(--text-muted)', marginBottom: 'var(--space-2)', textTransform: 'capitalize' }}>
+                        {selLabel}
+                      </div>
+                      {dayEvents.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                          {dayEvents.map(event => (
+                            <div key={event.id} style={{
+                              display: 'flex',
+                              gap: 'var(--space-3)',
+                              padding: 'var(--space-2) var(--space-3)',
+                              background: 'var(--surface-sunk)',
+                              borderRadius: 'var(--radius-sm)',
+                              font: 'var(--type-body)',
+                            }}>
+                              {!event.allDay && (
+                                <span style={{ font: 'var(--type-numeral)', color: 'var(--accent)', minWidth: '45px' }}>
+                                  {event.start.slice(11, 16)}
+                                </span>
+                              )}
+                              <span>{event.title}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ color: 'var(--text-muted)', font: 'var(--type-body)' }}>Ingen hendelser</p>
+                      )}
+                      <button
+                        onClick={() => setSelectedDay(null)}
+                        style={{ marginTop: 'var(--space-2)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', font: 'var(--type-caption)' }}
+                      >
+                        Lukk
+                      </button>
+                    </div>
+                  );
+                })()}
+
+                {calendarEvents.length === 0 && (
+                  <p style={{ color: 'var(--text-muted)', marginTop: 'var(--space-3)' }}>
+                    Ingen kalender tilgang — logg ut og inn igjen for å koble til Google Kalender
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </Card>
 
         <Card>
