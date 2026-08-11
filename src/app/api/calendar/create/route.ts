@@ -47,19 +47,23 @@ export async function POST(request: Request) {
         eventPayload.end = { date: endDate };
       }
     } else {
-      // Timed: Date() parses local datetime as Oslo time; toISOString() → UTC
-      // e.g. "2026-08-14T16:00:00" → "2026-08-14T14:00:00.000Z" (UTC)
-      // Google sees 14:00 UTC → converts to 16:00 Oslo (correct)
+      // Timed: parse input as Oslo local time, convert to UTC for API
       const startDt = new Date(start);
+      const endDt = end ? new Date(end) : null;
+      
+      console.log('[Calendar Create] isAllDay:', isAllDay);
+      console.log('[Calendar Create] input start:', start, '→ parsed UTC:', startDt.toISOString());
+      console.log('[Calendar Create] input end:', end, '→ parsed UTC:', endDt?.toISOString());
+      console.log('[Calendar Create] payload:', JSON.stringify(eventPayload));
+      
       eventPayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       
-      if (end) {
-        const endDt = new Date(end);
+      if (endDt) {
         eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       } else {
-        const endDt = new Date(start);
-        endDt.setHours(endDt.getHours() + 1);
-        eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
+        const defaultEnd = new Date(start);
+        defaultEnd.setHours(defaultEnd.getHours() + 1);
+        eventPayload.end = { dateTime: defaultEnd.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }
 
