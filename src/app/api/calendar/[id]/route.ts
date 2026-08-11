@@ -30,10 +30,19 @@ export async function PATCH(
 
     const calId = calendarId || 'primary';
 
+    const isAllDay = start && !start.includes('T');
     const updatePayload: any = {};
     if (summary !== undefined) updatePayload.summary = summary;
-    if (start !== undefined) updatePayload.start = start.includes('T') ? { dateTime: start, timeZone: 'Europe/Oslo' } : { date: start, timeZone: 'Europe/Oslo' };
-    if (end !== undefined) updatePayload.end = end.includes('T') ? { dateTime: end, timeZone: 'Europe/Oslo' } : { date: end, timeZone: 'Europe/Oslo' };
+    if (start !== undefined) {
+      updatePayload.start = isAllDay
+        ? { date: start }
+        : { dateTime: start, timeZone: 'Europe/Oslo' };
+    }
+    if (end !== undefined) {
+      updatePayload.end = !end.includes('T')
+        ? { date: end }
+        : { dateTime: end, timeZone: 'Europe/Oslo' };
+    }
 
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events/${id}`,

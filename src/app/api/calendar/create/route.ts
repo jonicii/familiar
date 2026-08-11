@@ -31,10 +31,17 @@ export async function POST(request: Request) {
 
     const calId = calendarId || 'primary';
     
+    const isAllDay = !start.includes('T');
     const eventPayload: any = {
       summary,
-      start: end ? { dateTime: start, timeZone: 'Europe/Oslo' } : { date: start, timeZone: 'Europe/Oslo' },
-      end: end ? { dateTime: end, timeZone: 'Europe/Oslo' } : undefined,
+      start: isAllDay
+        ? { date: start }
+        : { dateTime: start, timeZone: 'Europe/Oslo' },
+      end: end
+        ? isAllDay
+          ? { date: end }
+          : { dateTime: end, timeZone: 'Europe/Oslo' }
+        : undefined,
     };
 
     const response = await fetch(
