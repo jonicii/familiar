@@ -78,6 +78,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showAddGrocery, setShowAddGrocery] = useState(false);
   const [newGroceryItem, setNewGroceryItem] = useState('');
+  const [showDoneItems, setShowDoneItems] = useState(false);
   const [showAddNote, setShowAddNote] = useState(false);
   const [newNoteContent, setNewNoteContent] = useState('');
   
@@ -561,39 +562,98 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
           {groceryList.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {groceryList.map(item => (
-                <div key={item.id} style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => toggleListItem(item.id, item.checked)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--space-3)',
-                      padding: 'var(--space-2) var(--space-3)',
-                      background: 'transparent',
-                      border: 'none',
-                      borderRadius: 'var(--radius-sm)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                  >
-                    <span style={{ width: '20px', height: '20px', borderRadius: 'var(--radius-xs)', border: item.checked ? 'none' : '2px solid var(--line-soft)', background: item.checked ? 'var(--ok)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {item.checked && <Icon name="check" size={14} style={{ color: 'white' }} />}
-                    </span>
-                    <span style={{ font: 'var(--type-body)', textDecoration: item.checked ? 'line-through' : 'none', color: item.checked ? 'var(--text-faint)' : 'var(--text-body)' }}>
-                      {item.content}
-                    </span>
-                  </button>
-                  {justCompleted === item.id && <Bloom open={true} size={40} color="var(--ok)" />}
-                </div>
-              ))}
+              {groceryList
+                .filter(item => !item.checked)
+                .map(item => (
+                  <div key={item.id} style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => toggleListItem(item.id, item.checked)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-3)',
+                        padding: 'var(--space-2) var(--space-3)',
+                        background: 'transparent',
+                        border: 'none',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        width: '100%',
+                      }}
+                    >
+                      <span style={{ width: '20px', height: '20px', borderRadius: 'var(--radius-xs)', border: '2px solid var(--line-soft)', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      </span>
+                      <span style={{ font: 'var(--type-body)', color: 'var(--text-body)' }}>
+                        {item.content}
+                      </span>
+                    </button>
+                    {justCompleted === item.id && <Bloom open={true} size={40} color="var(--ok)" />}
+                  </div>
+                ))}
             </div>
           ) : (
             <p style={{ color: 'var(--text-muted)' }}>Ingenting på listen.</p>
           )}
 
-          {groceryList.length > 0 && (
+          {/* Done items section */}
+          {(() => {
+            const doneItems = groceryList.filter(i => i.checked);
+            if (doneItems.length === 0) return null;
+            return (
+              <div style={{ marginTop: 'var(--space-4)' }}>
+                <button
+                  onClick={() => setShowDoneItems(!showDoneItems)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-2)',
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    font: 'var(--type-caption)',
+                    marginBottom: showDoneItems ? 'var(--space-2)' : 0,
+                  }}
+                >
+                  <Icon name={showDoneItems ? 'chevron-right' : 'chevron-right'} size={14} style={{ transform: showDoneItems ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }} />
+                  {doneItems.length} ferdig {doneItems.length === 1 ? 'vare' : 'varer'}
+                </button>
+                {showDoneItems && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', opacity: 0.5 }}>
+                    {doneItems.map(item => (
+                      <div key={item.id} style={{ position: 'relative' }}>
+                        <button
+                          onClick={() => toggleListItem(item.id, item.checked)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 'var(--space-3)',
+                            padding: 'var(--space-1) var(--space-2)',
+                            background: 'transparent',
+                            border: 'none',
+                            borderRadius: 'var(--radius-sm)',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            width: '100%',
+                          }}
+                        >
+                          <span style={{ width: '16px', height: '16px', borderRadius: 'var(--radius-xs)', background: 'var(--ok)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Icon name="check" size={10} style={{ color: 'white' }} />
+                          </span>
+                          <span style={{ font: 'var(--type-body)', textDecoration: 'line-through', color: 'var(--text-faint)' }}>
+                            {item.content}
+                          </span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {groceryList.filter(i => !i.checked).length > 0 && (
             <div style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-3)', borderTop: 'var(--border-hair)', font: 'var(--type-caption)', color: 'var(--text-muted)' }}>
               {groceryList.filter(i => !i.checked).length} igjen
             </div>
