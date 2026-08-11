@@ -95,6 +95,13 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   // Bloom animation state
   const [justCompleted, setJustCompleted] = useState<string | null>(null);
 
+  // Convert UTC ISO timestamp to Oslo HH:MM time
+  const toOsloTime = (isoString: string) => {
+    const utcDate = new Date(isoString);
+    const osloDate = new Date(utcDate.getTime() + 2 * 60 * 60 * 1000);
+    return osloDate.toISOString().slice(11, 16);
+  };
+
   // Extract calendar fetch so it can be called after creating events
   const fetchCalendarEvents = async (calId: string) => {
     try {
@@ -237,12 +244,25 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
     setShowAddNote(false);
   };
 
-  const openEditModal = (event: {id: string; title: string; start: string; end?: string}) => {
+  const openEditModal = (event: {id: string; title: string; start: string; end?: string; allDay?: boolean}) => {
     setEditingEvent(event);
     setEditEventTitle(event.title);
-    const date = event.start.slice(0, 10);
-    const time = event.start.includes('T') ? event.start.slice(11, 16) : '';
-    const endTime = event.end && event.end.includes('T') ? event.end.slice(11, 16) : '';
+    let date: string;
+    let time: string;
+    if (event.allDay || !event.start.includes('T')) {
+      date = event.start.slice(0, 10);
+      time = '';
+    } else {
+      // Convert UTC to Oslo for display
+      const osloDate = new Date(new Date(event.start).getTime() + 2 * 60 * 60 * 1000);
+      date = osloDate.toISOString().slice(0, 10);
+      time = osloDate.toISOString().slice(11, 16);
+    }
+    let endTime = '';
+    if (event.end && event.end.includes('T')) {
+      const endOslo = new Date(new Date(event.end).getTime() + 2 * 60 * 60 * 1000);
+      endTime = endOslo.toISOString().slice(11, 16);
+    }
     setEditEventDate(date);
     setEditEventTime(time);
     setEditEventEndTime(endTime);
@@ -439,7 +459,18 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
               const getEventsForDay = (date: Date) => {
                 const dateStr = date.toISOString().slice(0, 10);
-                return calendarEvents.filter(e => e.start?.slice(0, 10) === dateStr);
+                return calendarEvents.filter(e => {
+                  if (e.allDay || !e.start?.includes('T')) {
+                    // All-day: compare UTC date strings directly
+                    return e.start?.slice(0, 10) === dateStr;
+                  } else {
+                    // Timed event: convert to Oslo date for correct day display
+                    // e.g. "2026-08-14T06:00:00.000Z" (UTC) → "2026-08-14" (Oslo, UTC+2)
+                    const utcDate = new Date(e.start);
+                    const osloDate = new Date(utcDate.getTime() + 2 * 60 * 60 * 1000);
+                    return osloDate.toISOString().slice(0, 10) === dateStr;
+                  }
+                });
               };
 
               // Desktop: horizontal 7-day grid
@@ -492,9 +523,9 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
                                   textAlign: 'left',
                                   width: '100%',
                                 }}
-                                title={`${event.allDay ? '' : event.start.slice(11, 16) + ' '}${event.title}`}
+                                title={`${event.allDay ? '' : toOsloTime(event.start) + ' '}${event.title}`}
                               >
-                                {event.allDay ? '' : <span style={{ color: 'var(--accent)', marginRight: '2px' }}>{event.start.slice(11, 16)}</span>}
+                                {event.allDay ? '' : <span style={{ color: 'var(--accent)', marginRight: '2px' }}>{toOsloTime(event.start)}</span>}
                                 {event.title}
                               </button>
                             ))}
@@ -567,7 +598,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
                                 }}
                               >
                                 <span style={{ font: 'var(--type-numeral)', color: 'var(--accent)', minWidth: '40px' }}>
-                                  {event.allDay ? '' : event.start.slice(11, 16)}
+                                  {event.allDay ? '' : toOsloTime(event.start)}
                                 </span>
                                 <span>{event.title}</span>
                               </button>
