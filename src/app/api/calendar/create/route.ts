@@ -47,21 +47,18 @@ export async function POST(request: Request) {
         eventPayload.end = { date: endDate };
       }
     } else {
-      // Timed: parse input as Oslo local time, convert to UTC for API
-      const startDt = new Date(start);
-      const endDt = end ? new Date(end) : null;
-      
-      console.log('[Calendar Create] isAllDay:', isAllDay);
-      console.log('[Calendar Create] input start:', start, '→ parsed UTC:', startDt.toISOString());
-      console.log('[Calendar Create] input end:', end, '→ parsed UTC:', endDt?.toISOString());
-      console.log('[Calendar Create] payload:', JSON.stringify(eventPayload));
+      // Timed: append Oslo timezone offset so Date() parses as Oslo time, not UTC
+      // Vercel server runs in UTC, so "2026-08-14T08:00" would otherwise be interpreted as UTC
+      const osloOffset = '+02:00'; // August = DST (CEST = UTC+2)
+      const startDt = new Date(start + osloOffset);
       
       eventPayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       
-      if (endDt) {
+      if (end) {
+        const endDt = new Date(end + osloOffset);
         eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       } else {
-        const defaultEnd = new Date(start);
+        const defaultEnd = new Date(start + osloOffset);
         defaultEnd.setHours(defaultEnd.getHours() + 1);
         eventPayload.end = { dateTime: defaultEnd.toISOString(), timeZone: 'Europe/Oslo' };
       }

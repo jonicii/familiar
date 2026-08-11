@@ -33,11 +33,12 @@ export async function PATCH(
     const isAllDay = start && !start.includes('T');
     const updatePayload: any = {};
     if (summary !== undefined) updatePayload.summary = summary;
+    const osloOffset = '+02:00';
     if (start !== undefined) {
       if (isAllDay) {
         updatePayload.start = { date: start };
       } else {
-        const startDt = new Date(start);
+        const startDt = new Date(start + osloOffset);
         updatePayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }
@@ -45,7 +46,7 @@ export async function PATCH(
       if (!end.includes('T')) {
         updatePayload.end = { date: end };
       } else {
-        const endDt = new Date(end);
+        const endDt = new Date(end + osloOffset);
         updatePayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }
