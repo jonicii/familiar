@@ -61,7 +61,17 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [listItems, setListItems] = useState<ListItem[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string; allDay?: boolean}[]>([]);
   const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [calendarId, setCalendarId] = useState<string>('primary');
   const [loading, setLoading] = useState(true);
+  
+  // Add event modal
+  const [showAddEvent, setShowAddEvent] = useState(false);
+  const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventDate, setNewEventDate] = useState('');
+  const [newEventTime, setNewEventTime] = useState('');
+  const [newEventEndTime, setNewEventEndTime] = useState('');
+  const [addEventLoading, setAddEventLoading] = useState(false);
+  const [addEventError, setAddEventError] = useState<string | null>(null);
   
   // Add item states
   const [showAddTask, setShowAddTask] = useState(false);
@@ -74,6 +84,32 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   // Bloom animation state
   const [justCompleted, setJustCompleted] = useState<string | null>(null);
 
+  // Extract calendar fetch so it can be called after creating events
+  const fetchCalendarEvents = async (calId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.provider_token) {
+        const calRes = await fetch(`/api/calendar?weeks=4${calId !== 'primary' ? `&calendarId=${encodeURIComponent(calId)}` : ''}`, {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            'x-google-token': session.provider_token || '',
+          }
+        });
+        const calData = await calRes.json();
+        if (calRes.ok) {
+          setCalendarEvents(calData.events || []);
+        } else {
+          setCalendarError(calData.message || calData.error || `Kalenderfeil`);
+        }
+      } else {
+        setCalendarError('Ingen Google-tilgang — logg ut og inn igjen');
+      }
+    } catch (e) {
+      console.error('Failed to fetch calendar:', e);
+      setCalendarError('Klarte ikke å koble til kalender');
+    }
+  };
+
   useEffect(() => {
     async function loadData() {
       const { data: household } = await supabase
@@ -82,7 +118,8 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
         .eq('invite_code', TEST_HOUSEHOLD_INVITE_CODE)
         .single();
 
-      const householdCalendarId = household?.google_calendar_id || null;
+      const householdCalendarId = household?.google_calendar_id || 'primary';
+      setCalendarId(householdCalendarId);
 
       if (!household) {
         setLoading(false);
@@ -111,30 +148,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
         setListItems(itemsRes.data || []);
       }
 
-      // Fetch today's calendar events
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.provider_token) {
-          const calRes = await fetch(`/api/calendar?weeks=1${householdCalendarId ? `&calendarId=${encodeURIComponent(householdCalendarId)}` : ''}`, {
-            headers: {
-              Authorization: `Bearer ${session.access_token}`,
-              'x-google-token': session.provider_token || '',
-            }
-          });
-          const calData = await calRes.json();
-          if (calRes.ok) {
-            setCalendarEvents(calData.events || []);
-          } else {
-            setCalendarError(calData.message || calData.error || `Kalenderfeil`);
-          }
-        } else {
-          setCalendarError('Ingen Google-tilgang — logg ut og inn igjen');
-        }
-      } catch (e) {
-        console.error('Failed to fetch calendar:', e);
-        setCalendarError('Klarte ikke å koble til kalender');
-      }
-
+      await fetchCalendarEvents(householdCalendarId);
       setLoading(false);
     }
 
@@ -212,6 +226,52 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
     setShowAddNote(false);
   };
 
+  const addCalendarEvent = async () => {
+    if (!newEventTitle.trim() || !newEventDate) return;
+    setAddEventLoading(true);
+    setAddEventError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.provider_token) {
+        setAddEventError('Ingen Google-tilgang');
+        setAddEventLoading(false);
+        return;
+      }
+
+      const start = newEventTime ? `${newEventDate}T${newEventTime}:00` : newEventDate;
+      const end = newEventTime && newEventEndTime ? `${newEventDate}T${newEventEndTime}:00` : undefined;
+
+      const res = await fetch('/api/calendar/create', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'x-google-token': session.provider_token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ summary: newEventTitle, start, end, calendarId }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        setAddEventError(data.message || 'Kunne ikke opprette hendelse');
+        setAddEventLoading(false);
+        return;
+      }
+
+      setNewEventTitle('');
+      setNewEventDate('');
+      setNewEventTime('');
+      setNewEventEndTime('');
+      setShowAddEvent(false);
+      setAddEventLoading(false);
+      await fetchCalendarEvents(calendarId); // Refresh events
+    } catch (e) {
+      setAddEventError('Noe gikk galt');
+      setAddEventLoading(false);
+    }
+  };
+
   const incompleteTasks = tasks.filter(t => !t.completed);
   const groceryList = listItems;
   const pinnedNote = notes.find(n => n.pinned);
@@ -240,11 +300,23 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           </p>
         </div>
 
+        {/* Week calendar card */}
         <Card>
-          <h2 style={{ font: 'var(--type-subtitle)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <Icon name="calendar-days" size={20} />
-            I dag
-          </h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+            <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <Icon name="calendar-days" size={20} />
+              Ukalender
+            </h2>
+            {!calendarError && (
+              <Button tone="soft" size="sm" iconLeft={<Icon name="plus" size={14} />} onClick={() => {
+                const today = new Date().toISOString().slice(0, 10);
+                setNewEventDate(today);
+                setShowAddEvent(true);
+              }}>
+                Legg til
+              </Button>
+            )}
+          </div>
 
           {calendarError ? (
             <div>
@@ -253,37 +325,150 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
               </p>
               <Button tone="soft" size="sm" onClick={() => signInWithGoogle()}>
                 <Icon name="calendar-month" size={14} />
-                {' '}Koble til Google Kalender
+                {' '}Koble til
               </Button>
             </div>
-          ) : calendarEvents.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {calendarEvents
-                .filter(e => {
-                  const eventDate = e.start?.slice(0, 10);
-                  const todayStr = new Date().toISOString().slice(0, 10);
-                  return eventDate === todayStr;
-                })
-                .map(event => (
-                  <div key={event.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-3)',
-                    padding: 'var(--space-2) var(--space-3)',
-                    background: 'var(--surface-sunk)',
-                    borderRadius: 'var(--radius-sm)',
-                  }}>
-                    {!event.allDay && (
-                      <span style={{ font: 'var(--type-numeral)', color: 'var(--accent)', minWidth: '45px' }}>
-                        {event.start.slice(11, 16)}
-                      </span>
-                    )}
-                    <span style={{ font: 'var(--type-body)' }}>{event.title}</span>
-                  </div>
-                ))}
-            </div>
           ) : (
-            <p style={{ color: 'var(--text-muted)' }}>Ingen hendelser i dag.</p>
+            (() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const todayStr = today.toISOString().slice(0, 10);
+              const dayOfWeek = today.getDay();
+              const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+              const monday = new Date(today);
+              monday.setDate(today.getDate() - daysFromMonday);
+
+              const weekDays = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
+              const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'];
+
+              const getEventsForDay = (date: Date) => {
+                const dateStr = date.toISOString().slice(0, 10);
+                return calendarEvents.filter(e => e.start?.slice(0, 10) === dateStr);
+              };
+
+              // Desktop: horizontal 7-day grid
+              if (!isMobile) {
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 'var(--space-3)' }}>
+                    {Array.from({ length: 7 }, (_, i) => {
+                      const day = new Date(monday);
+                      day.setDate(monday.getDate() + i);
+                      const dayStr = day.toISOString().slice(0, 10);
+                      const isToday = dayStr === todayStr;
+                      const events = getEventsForDay(day);
+                      return (
+                        <div key={dayStr} style={{
+                          borderRadius: 'var(--radius-md)',
+                          background: isToday ? 'var(--accent-soft)' : 'var(--surface-sunk)',
+                          padding: 'var(--space-3)',
+                          minHeight: '100px',
+                        }}>
+                          <div style={{ textAlign: 'center', marginBottom: 'var(--space-2)' }}>
+                            <div style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', fontSize: '10px' }}>
+                              {weekDays[i]}
+                            </div>
+                            <div style={{
+                              font: 'var(--type-numeral)',
+                              fontSize: '16px',
+                              color: isToday ? 'var(--accent)' : 'var(--text-strong)',
+                              fontWeight: isToday ? 700 : 400,
+                            }}>
+                              {day.getDate()}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
+                            {events.slice(0, 4).map(event => (
+                              <div key={event.id} style={{
+                                font: 'var(--type-caption)',
+                                fontSize: '11px',
+                                padding: '2px 4px',
+                                background: 'var(--surface-card)',
+                                borderRadius: 'var(--radius-xs)',
+                                color: 'var(--text-body)',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title={`${event.allDay ? '' : event.start.slice(11, 16) + ' '}${event.title}`}
+                              >
+                                {event.allDay ? '' : <span style={{ color: 'var(--accent)', marginRight: '2px' }}>{event.start.slice(11, 16)}</span>}
+                                {event.title}
+                              </div>
+                            ))}
+                            {events.length > 4 && (
+                              <div style={{ font: 'var(--type-caption)', fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                                +{events.length - 4} mer
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+
+              // Mobile: vertical list of days
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  {Array.from({ length: 7 }, (_, i) => {
+                    const day = new Date(monday);
+                    day.setDate(monday.getDate() + i);
+                    const dayStr = day.toISOString().slice(0, 10);
+                    const isToday = dayStr === todayStr;
+                    const events = getEventsForDay(day);
+                    return (
+                      <div key={dayStr}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--space-3)',
+                          marginBottom: 'var(--space-2)',
+                        }}>
+                          <span style={{
+                            font: 'var(--type-numeral)',
+                            fontSize: '14px',
+                            color: isToday ? 'var(--accent)' : 'var(--text-strong)',
+                            fontWeight: isToday ? 700 : 400,
+                            minWidth: '24px',
+                          }}>
+                            {day.getDate()}
+                          </span>
+                          <span style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', fontSize: '11px' }}>
+                            {MONTHS[day.getMonth()]} · {weekDays[i]}
+                          </span>
+                          {isToday && (
+                            <span style={{ font: 'var(--type-caption)', fontSize: '10px', color: 'var(--accent)', background: 'var(--accent-soft)', padding: '1px 6px', borderRadius: 'var(--radius-pill)' }}>
+                              I dag
+                            </span>
+                          )}
+                        </div>
+                        {events.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', paddingLeft: '32px' }}>
+                            {events.map(event => (
+                              <div key={event.id} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 'var(--space-2)',
+                                font: 'var(--type-body)',
+                                fontSize: '13px',
+                              }}>
+                                <span style={{ font: 'var(--type-numeral)', color: 'var(--accent)', minWidth: '40px' }}>
+                                  {event.allDay ? '' : event.start.slice(11, 16)}
+                                </span>
+                                <span>{event.title}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p style={{ color: 'var(--text-faint)', font: 'var(--type-caption)', paddingLeft: '32px' }}>—</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()
           )}
         </Card>
 
@@ -446,6 +631,120 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           </Button>
         </Card>
       </div>
+
+      {/* Add Event Modal */}
+      {showAddEvent && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 100,
+          padding: 'var(--space-4)',
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowAddEvent(false); }}
+        >
+          <div style={{
+            background: 'var(--surface-card)',
+            borderRadius: 'var(--radius-xl)',
+            padding: 'var(--space-6)',
+            width: '100%',
+            maxWidth: '400px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }}>
+            <h2 style={{ font: 'var(--type-title)', color: 'var(--text-strong)', marginBottom: 'var(--space-5)' }}>
+              Ny hendelse
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+              <Input
+                placeholder="Hva skjer?"
+                value={newEventTitle}
+                onChange={(e) => setNewEventTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && addCalendarEvent()}
+                autoFocus
+              />
+
+              <div>
+                <label style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', display: 'block', marginBottom: 'var(--space-1)' }}>
+                  Dato
+                </label>
+                <input
+                  type="date"
+                  value={newEventDate}
+                  onChange={(e) => setNewEventDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: 'var(--space-2) var(--space-3)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--line-soft)',
+                    background: 'var(--surface-sunk)',
+                    color: 'var(--text-body)',
+                    font: 'var(--type-body)',
+                    fontFamily: 'var(--font-ui)',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', display: 'block', marginBottom: 'var(--space-1)' }}>
+                    Fra
+                  </label>
+                  <input
+                    type="time"
+                    value={newEventTime}
+                    onChange={(e) => setNewEventTime(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: 'var(--space-2) var(--space-3)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--line-soft)',
+                      background: 'var(--surface-sunk)',
+                      color: 'var(--text-body)',
+                      font: 'var(--type-body)',
+                      fontFamily: 'var(--font-ui)',
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ font: 'var(--type-caption)', color: 'var(--text-muted)', display: 'block', marginBottom: 'var(--space-1)' }}>
+                    Til (valgfritt)
+                  </label>
+                  <input
+                    type="time"
+                    value={newEventEndTime}
+                    onChange={(e) => setNewEventEndTime(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: 'var(--space-2) var(--space-3)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--line-soft)',
+                      background: 'var(--surface-sunk)',
+                      color: 'var(--text-body)',
+                      font: 'var(--type-body)',
+                      fontFamily: 'var(--font-ui)',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {addEventError && (
+                <p style={{ color: 'var(--destructive)', font: 'var(--type-caption)' }}>{addEventError}</p>
+              )}
+
+              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end', marginTop: 'var(--space-2)' }}>
+                <Button tone="ghost" onClick={() => setShowAddEvent(false)}>Avbryt</Button>
+                <Button onClick={addCalendarEvent} disabled={addEventLoading}>
+                  {addEventLoading ? 'Lagrer...' : 'Legg til'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
