@@ -34,7 +34,7 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.provider_token) {
-          setCalendarError('Ingen Google-tilgang — koble til for å se kalender');
+          setCalendarError('Ingen Google-tilgang — sign out and sign in again');
           setLoading(false);
           return;
         }
@@ -49,7 +49,12 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
 
         const res = await fetch(
           `/api/calendar?weeks=10&start=${startRange.toISOString()}&end=${endRange.toISOString()}`,
-          { headers: { Authorization: `Bearer ${session.access_token}` } }
+          {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'x-google-token': session.provider_token || '',
+            }
+          }
         );
 
         if (!res.ok) {

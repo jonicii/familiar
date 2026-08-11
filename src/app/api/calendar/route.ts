@@ -6,37 +6,27 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export async function GET(request: Request) {
   try {
-    // Get the user's session from the Authorization header
+    // Two-token auth: Supabase JWT for session validation + Google token for Calendar API
     const authHeader = request.headers.get('Authorization');
+    const googleToken = request.headers.get('x-google-token');
+    
     if (!authHeader) {
       return NextResponse.json({ error: 'No auth header' }, { status: 401 });
     }
+    if (!googleToken) {
+      return NextResponse.json({ error: 'No Google token — sign out and back in to refresh permissions' }, { status: 400 });
+    }
 
-    // Create a Supabase client with the user's JWT
+    // Validate the Supabase session
     const supabase = createClient(supabaseUrl, supabaseKey, {
       global: { headers: { Authorization: authHeader } }
     });
-
-    // Get the session to access the provider token
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    // Get the provider token (Google access token)
-    const providerToken = session.provider_token;
-    if (!providerToken) {
-      // Check what providers are available
-      const providers = session.user?.app_metadata?.providers;
-      return NextResponse.json({
-        error: 'No Google access token',
-        hint: 'Sign out and sign in again to grant calendar access',
-        hasProviderToken: !!providerToken,
-        providers,
-        userEmail: session.user?.email,
-      }, { status: 400 });
-    }
+    const providerToken = googleToken;
 
     // Get weeks param (default 4) or explicit start/end
     const url = new URL(request.url);

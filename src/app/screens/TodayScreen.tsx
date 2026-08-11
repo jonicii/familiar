@@ -114,7 +114,10 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.provider_token) {
           const calRes = await fetch('/api/calendar?weeks=1', {
-            headers: { Authorization: `Bearer ${session.access_token}` }
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+              'x-google-token': session.provider_token || '',
+            }
           });
           const calData = await calRes.json();
           if (calRes.ok) {
