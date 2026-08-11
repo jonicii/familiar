@@ -8,8 +8,9 @@ import TodayScreen from '@/app/screens/TodayScreen';
 import WeekScreen from '@/app/screens/WeekScreen';
 import ChoresScreen from '@/app/screens/ChoresScreen';
 import MealsScreen from '@/app/screens/MealsScreen';
+import CalendarScreen from '@/app/screens/CalendarScreen';
 
-type Screen = 'today' | 'week' | 'chores' | 'meals';
+type Screen = 'today' | 'week' | 'chores' | 'meals' | 'calendar';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('today');
@@ -54,6 +55,7 @@ export default function App() {
     { value: 'week', label: 'Uke', icon: <Icon name="calendar-days" size={26} /> },
     { value: 'chores', label: 'Gjøremål', icon: <Icon name="sprout" size={26} /> },
     { value: 'meals', label: 'Måltider', icon: <Icon name="utensils" size={26} /> },
+    { value: 'calendar', label: 'Kalender', icon: <Icon name="calendar-month" size={26} /> },
   ];
 
   const renderScreen = () => {
@@ -66,6 +68,8 @@ export default function App() {
         return <ChoresScreen isMobile={isMobile} />;
       case 'meals':
         return <MealsScreen isMobile={isMobile} />;
+      case 'calendar':
+        return <CalendarScreen isMobile={isMobile} />;
       default:
         return <TodayScreen isMobile={isMobile} />;
     }

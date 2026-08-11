@@ -13,6 +13,7 @@ type LucideComponent = React.ComponentType<{ size?: number; className?: string; 
 const iconMap: Record<string, LucideComponent> = {
   sun: LucideIcons.Sun as LucideComponent,
   'calendar-days': LucideIcons.CalendarDays as LucideComponent,
+  'calendar-month': LucideIcons.Calendar as LucideComponent,
   sprout: LucideIcons.Sprout as LucideComponent,
   utensils: LucideIcons.Utensils as LucideComponent,
   'shopping-basket': LucideIcons.ShoppingBasket as LucideComponent,

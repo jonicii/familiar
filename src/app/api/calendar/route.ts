@@ -30,24 +30,32 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No Google access token' }, { status: 400 });
     }
 
-    // Get weeks param (default 4)
+    // Get weeks param (default 4) or explicit start/end
     const url = new URL(request.url);
-    const weeks = parseInt(url.searchParams.get('weeks') || '4', 10);
+    const weeksParam = url.searchParams.get('weeks');
+    const startParam = url.searchParams.get('start');
+    const endParam = url.searchParams.get('end');
 
-    // Get current week's Monday as start
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon...
-    const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - daysFromMonday);
-    monday.setHours(0, 0, 0, 0);
+    let startOfRange: string;
+    let endOfRange: string;
+    let weeks = 4;
 
-    // End date: Monday + weeks * 7 days
-    const endDate = new Date(monday);
-    endDate.setDate(monday.getDate() + weeks * 7);
-
-    const startOfRange = monday.toISOString();
-    const endOfRange = endDate.toISOString();
+    if (startParam && endParam) {
+      startOfRange = startParam;
+      endOfRange = endParam;
+    } else {
+      weeks = parseInt(weeksParam || '4', 10);
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysFromMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - daysFromMonday);
+      monday.setHours(0, 0, 0, 0);
+      const endDate = new Date(monday);
+      endDate.setDate(monday.getDate() + weeks * 7);
+      startOfRange = monday.toISOString();
+      endOfRange = endDate.toISOString();
+    }
 
     // Fetch calendar events from Google Calendar API
     const calendarResponse = await fetch(
@@ -78,7 +86,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       events,
-      weekStart: monday.toISOString(),
+      rangeStart: startOfRange,
       weeks,
     });
   } catch (error) {

@@ -12,6 +12,10 @@ export async function signInWithGoogle() {
     options: {
       redirectTo: 'https://familiar-ten.vercel.app/auth/callback',
       scopes: 'https://www.googleapis.com/auth/calendar.readonly',
+      queryParams: {
+        prompt: 'consent',
+        access_type: 'offline',
+      },
     },
   });
   return { data, error };
