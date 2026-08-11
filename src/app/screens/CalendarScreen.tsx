@@ -18,7 +18,7 @@ const MONTHS = ['Januar', 'Februar', 'Mars', 'April', 'Mai', 'Juni', 'Juli', 'Au
 export default function CalendarScreen({ isMobile = false }: { isMobile?: boolean }) {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
-  const [calendarError, setCalendarError] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
   const [monthOffset, setMonthOffset] = useState(0); // 0 = current month
 
   // Current viewing month
@@ -30,11 +30,11 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
   useEffect(() => {
     async function loadEvents() {
       setLoading(true);
-      setCalendarError(false);
+      setCalendarError(null);
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.provider_token) {
-          setCalendarError(true);
+          setCalendarError('Ingen Google-tilgang — koble til for å se kalender');
           setLoading(false);
           return;
         }
@@ -53,7 +53,8 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
         );
 
         if (!res.ok) {
-          setCalendarError(true);
+          const data = await res.json();
+          setCalendarError(data.hint || data.error || 'Klarte ikke å hente kalender');
           setLoading(false);
           return;
         }
@@ -62,7 +63,7 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
         setEvents(data.events || []);
       } catch (e) {
         console.error('Calendar load error:', e);
-        setCalendarError(true);
+        setCalendarError('Klarte ikke å koble til kalender');
       }
       setLoading(false);
     }
@@ -115,8 +116,8 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
           Kalender
         </h1>
         <Card>
-          <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-4)' }}>
-            Klarte ikke å koble til Google Kalender. Prøv å koble til på nytt.
+          <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-3)', font: 'var(--type-body)' }}>
+            {calendarError}
           </p>
           <Button onClick={() => signInWithGoogle()}>
             <Icon name="calendar-month" size={16} />

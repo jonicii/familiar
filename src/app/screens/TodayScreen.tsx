@@ -60,7 +60,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [lists, setLists] = useState<List[]>([]);
   const [listItems, setListItems] = useState<ListItem[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string; allDay?: boolean}[]>([]);
-  const [calendarError, setCalendarError] = useState(false);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   
   // Add item states
@@ -116,18 +116,18 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           const calRes = await fetch('/api/calendar?weeks=1', {
             headers: { Authorization: `Bearer ${session.access_token}` }
           });
+          const calData = await calRes.json();
           if (calRes.ok) {
-            const calData = await calRes.json();
             setCalendarEvents(calData.events || []);
           } else {
-            setCalendarError(true);
+            setCalendarError(calData.hint || calData.error || 'Klarte ikke å hente kalender');
           }
         } else {
-          setCalendarError(true);
+          setCalendarError('Ingen Google-tilgang — logg ut og inn igjen');
         }
       } catch (e) {
         console.error('Failed to fetch calendar:', e);
-        setCalendarError(true);
+        setCalendarError('Klarte ikke å koble til kalender');
       }
 
       setLoading(false);
@@ -243,12 +243,12 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
           {calendarError ? (
             <div>
-              <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-3)' }}>
-                Klarte ikke å koble til Google Kalender.
+              <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-2)', font: 'var(--type-caption)' }}>
+                {calendarError}
               </p>
               <Button tone="soft" size="sm" onClick={() => signInWithGoogle()}>
                 <Icon name="calendar-month" size={14} />
-                {' '}Koble til på nytt
+                {' '}Koble til Google Kalender
               </Button>
             </div>
           ) : calendarEvents.length > 0 ? (

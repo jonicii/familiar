@@ -27,7 +27,15 @@ export async function GET(request: Request) {
     // Get the provider token (Google access token)
     const providerToken = session.provider_token;
     if (!providerToken) {
-      return NextResponse.json({ error: 'No Google access token' }, { status: 400 });
+      // Check what providers are available
+      const providers = session.user?.app_metadata?.providers;
+      return NextResponse.json({
+        error: 'No Google access token',
+        hint: 'Sign out and sign in again to grant calendar access',
+        hasProviderToken: !!providerToken,
+        providers,
+        userEmail: session.user?.email,
+      }, { status: 400 });
     }
 
     // Get weeks param (default 4) or explicit start/end
