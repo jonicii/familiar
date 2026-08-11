@@ -7,7 +7,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 export async function GET(request: Request) {
   try {
     // Get the user's session from the Authorization header
-    const authHeader = new Headers().get('Authorization');
+    const authHeader = request.headers.get('Authorization');
     if (!authHeader) {
       return NextResponse.json({ error: 'No auth header' }, { status: 401 });
     }
