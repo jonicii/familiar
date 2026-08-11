@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Icon, Button } from '@/components/core';
-import { supabase, signInWithGoogle } from '@/lib/supabase';
+import { supabase, signInWithGoogle, TEST_HOUSEHOLD_INVITE_CODE } from '@/lib/supabase';
 
 interface CalendarEvent {
   id: string;
@@ -32,6 +32,14 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
       setLoading(true);
       setCalendarError(null);
       try {
+        // Get household calendar ID
+        const { data: household } = await supabase
+          .from('households')
+          .select('google_calendar_id')
+          .eq('invite_code', TEST_HOUSEHOLD_INVITE_CODE)
+          .single();
+        const calendarId = household?.google_calendar_id || '';
+
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.provider_token) {
           setCalendarError('Ingen Google-tilgang — sign out and sign in again');
@@ -48,7 +56,7 @@ export default function CalendarScreen({ isMobile = false }: { isMobile?: boolea
         const endRange = new Date(year, month + 2, 7);
 
         const res = await fetch(
-          `/api/calendar?weeks=10&start=${startRange.toISOString()}&end=${endRange.toISOString()}`,
+          `/api/calendar?weeks=10&start=${startRange.toISOString()}&end=${endRange.toISOString()}${calendarId ? `&calendarId=${encodeURIComponent(calendarId)}` : ''}`,
           {
             headers: {
               Authorization: `Bearer ${session.access_token}`,

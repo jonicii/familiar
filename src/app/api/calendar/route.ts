@@ -56,8 +56,9 @@ export async function GET(request: Request) {
     }
 
     // Fetch calendar events from Google Calendar API
+    const calendarId = url.searchParams.get('calendarId') || 'primary';
     const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(startOfRange)}&timeMax=${encodeURIComponent(endOfRange)}&singleEvents=true&orderBy=startTime`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${encodeURIComponent(startOfRange)}&timeMax=${encodeURIComponent(endOfRange)}&singleEvents=true&orderBy=startTime`,
       {
         headers: {
           'Authorization': `Bearer ${providerToken}`,

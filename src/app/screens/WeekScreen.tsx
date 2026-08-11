@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Icon } from '@/components/core';
-import { supabase } from '@/lib/supabase';
+import { supabase, TEST_HOUSEHOLD_INVITE_CODE } from '@/lib/supabase';
 
 interface CalendarEvent {
   id: string;
@@ -21,9 +21,17 @@ export default function WeekScreen({ isMobile = false }: { isMobile?: boolean })
   useEffect(() => {
     async function loadEvents() {
       try {
+        // Get household calendar ID
+        const { data: household } = await supabase
+          .from('households')
+          .select('google_calendar_id')
+          .eq('invite_code', TEST_HOUSEHOLD_INVITE_CODE)
+          .single();
+        const calendarId = household?.google_calendar_id || '';
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.provider_token) {
-          const res = await fetch('/api/calendar?weeks=1', {
+          const res = await fetch(`/api/calendar?weeks=1${calendarId ? `&calendarId=${encodeURIComponent(calendarId)}` : ''}`, {
             headers: {
               Authorization: `Bearer ${session.access_token}`,
               'x-google-token': session.provider_token || '',

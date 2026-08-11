@@ -82,6 +82,8 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
         .eq('invite_code', TEST_HOUSEHOLD_INVITE_CODE)
         .single();
 
+      const householdCalendarId = household?.google_calendar_id || null;
+
       if (!household) {
         setLoading(false);
         return;
@@ -113,7 +115,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.provider_token) {
-          const calRes = await fetch('/api/calendar?weeks=1', {
+          const calRes = await fetch(`/api/calendar?weeks=1${householdCalendarId ? `&calendarId=${encodeURIComponent(householdCalendarId)}` : ''}`, {
             headers: {
               Authorization: `Bearer ${session.access_token}`,
               'x-google-token': session.provider_token || '',
