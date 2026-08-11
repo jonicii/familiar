@@ -32,17 +32,35 @@ export async function POST(request: Request) {
     const calId = calendarId || 'primary';
     
     const isAllDay = !start.includes('T');
-    const eventPayload: any = {
+    console.log('[Calendar Create] start:', start, 'end:', end, 'isAllDay:', isAllDay);
+    
+    const eventPayload: Record<string, any> = {
       summary,
-      start: isAllDay
-        ? { date: start }
-        : { dateTime: start, timeZone: 'Europe/Oslo' },
-      end: end
-        ? isAllDay
-          ? { date: end }
-          : { dateTime: end, timeZone: 'Europe/Oslo' }
-        : undefined,
     };
+    
+    if (isAllDay) {
+      // All-day: use date-only strings (YYYY-MM-DD)
+      const startDate = start.includes('T') ? start.slice(0, 10) : start;
+      eventPayload.start = { date: startDate };
+      
+      if (end) {
+        const endDate = end.includes('T') ? end.slice(0, 10) : end;
+        eventPayload.end = { date: endDate };
+      }
+      // If no end for all-day, don't include it (Google treats as single-day)
+    } else {
+      // Timed event
+      eventPayload.start = { dateTime: start, timeZone: 'Europe/Oslo' };
+      
+      if (end) {
+        eventPayload.end = { dateTime: end, timeZone: 'Europe/Oslo' };
+      } else {
+        // Default end = start + 1 hour
+        const startDate = new Date(start);
+        startDate.setHours(startDate.getHours() + 1);
+        eventPayload.end = { dateTime: startDate.toISOString(), timeZone: 'Europe/Oslo' };
+      }
+    }
 
     const response = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`,
