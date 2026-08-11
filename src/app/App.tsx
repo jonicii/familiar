@@ -5,12 +5,10 @@ import { NavRail } from '@/components/navigation';
 import { Icon, Button, Card } from '@/components/core';
 import { supabase, signInWithGoogle, signOut } from '@/lib/supabase';
 import TodayScreen from '@/app/screens/TodayScreen';
-import WeekScreen from '@/app/screens/WeekScreen';
-import ChoresScreen from '@/app/screens/ChoresScreen';
 import MealsScreen from '@/app/screens/MealsScreen';
 import CalendarScreen from '@/app/screens/CalendarScreen';
 
-type Screen = 'today' | 'week' | 'chores' | 'meals' | 'calendar';
+type Screen = 'today' | 'meals' | 'calendar';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('today');
@@ -52,8 +50,6 @@ export default function App() {
 
   const navItems = [
     { value: 'today', label: 'I dag', icon: <Icon name="sun" size={26} /> },
-    { value: 'week', label: 'Uke', icon: <Icon name="calendar-days" size={26} /> },
-    { value: 'chores', label: 'Gjøremål', icon: <Icon name="sprout" size={26} /> },
     { value: 'meals', label: 'Måltider', icon: <Icon name="utensils" size={26} /> },
     { value: 'calendar', label: 'Kalender', icon: <Icon name="calendar-month" size={26} /> },
   ];
@@ -62,10 +58,6 @@ export default function App() {
     switch (screen) {
       case 'today':
         return <TodayScreen isMobile={isMobile} />;
-      case 'week':
-        return <WeekScreen isMobile={isMobile} />;
-      case 'chores':
-        return <ChoresScreen isMobile={isMobile} />;
       case 'meals':
         return <MealsScreen isMobile={isMobile} />;
       case 'calendar':

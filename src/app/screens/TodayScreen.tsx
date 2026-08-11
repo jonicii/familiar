@@ -4,6 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { Card, Button, Icon, Input } from '@/components/core';
 import { supabase, Note, Task, List, ListItem, Member, TEST_HOUSEHOLD_INVITE_CODE, signInWithGoogle } from '@/lib/supabase';
 
+const mockMeals = [
+  { day: 'Mandag', meals: { breakfast: 'Kornblanding', lunch: 'Smørbrød', dinner: 'Pasta' } },
+  { day: 'Tirsdag', meals: { breakfast: 'Toast', lunch: 'Suppe', dinner: 'Tacos' } },
+  { day: 'Onsdag', meals: { breakfast: 'Kreps', lunch: 'Salat', dinner: 'Pizza' } },
+  { day: 'Torsdag', meals: { breakfast: 'Yoghurt', lunch: 'Wrap', dinner: 'Curry' } },
+  { day: 'Fredag', meals: { breakfast: 'Egg', lunch: 'Restemat', dinner: 'Fisk & chips' } },
+  { day: 'Lørdag', meals: { breakfast: 'Vafler', lunch: '', dinner: 'Grill' } },
+  { day: 'Søndag', meals: { breakfast: 'Brunch', lunch: '', dinner: 'Stek' } },
+];
+
 // Simple bloom animation component
 function Bloom({ open, color = 'var(--person-5)', size = 96 }: { open: boolean; color?: string; size?: number }) {
   if (!open) return null;
@@ -402,6 +412,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
   const greeting = new Date().getHours() < 12 ? 'God morgen' : new Date().getHours() < 18 ? 'God ettermiddag' : 'God kveld';
   const today = new Date().toLocaleDateString('nb-NO', { weekday: 'long', day: 'numeric', month: 'short' });
+  const dayOfWeek = new Date().getDay(); // 0=Sun, 1=Mon ...
 
   return (
     <div style={{ display: isMobile ? 'flex' : 'grid', flexDirection: isMobile ? 'column' : undefined, gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: isMobile ? 'var(--space-4)' : 'var(--space-7)', height: '100%' }}>
@@ -623,70 +634,37 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           )}
         </Card>
 
+        {/* Today's meal */}
         <Card>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-4)' }}>
             <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <Icon name="check" size={20} />
-              Oppgaver
+              <Icon name="utensils" size={20} />
+              I dag
             </h2>
-            <Button tone="soft" size="sm" iconLeft={<Icon name="plus" size={16} />} onClick={() => setShowAddTask(!showAddTask)}>
-              Legg til
-            </Button>
           </div>
-
-          {showAddTask && (
-            <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-              <Input
-                placeholder="Hva trenger å gjøres?"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && addTask()}
-                style={{ flex: 1 }}
-              />
-              <Button onClick={addTask}>Legg til</Button>
-            </div>
-          )}
-
-          {incompleteTasks.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              {incompleteTasks.map(task => (
-                <div key={task.id} style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => toggleTask(task.id, task.completed)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--space-3)',
-                      padding: 'var(--space-3)',
-                      background: 'transparent',
-                      border: 'none',
-                      borderRadius: 'var(--radius-md)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      width: '100%',
-                    }}
-                  >
-                    <span style={{ width: '24px', height: '24px', borderRadius: 'var(--radius-xs)', border: '2px solid var(--line-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    </span>
-                    <span style={{ flex: 1, font: 'var(--type-body)' }}>{task.title}</span>
-                    {task.assigned_to && (
-                      <span style={{ font: 'var(--type-caption)', padding: 'var(--pad-chip)', background: `${getMemberColor(task.assigned_to)}22`, color: getMemberColor(task.assigned_to), borderRadius: 'var(--radius-pill)' }}>
-                        {getMemberName(task.assigned_to)}
-                      </span>
-                    )}
-                  </button>
-                  {justCompleted === task.id && <Bloom open={true} size={60} />}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-3)' }}>
+            {[
+              { label: 'Frokost', key: 'breakfast' as const },
+              { label: 'Lunsj', key: 'lunch' as const },
+              { label: 'Middag', key: 'dinner' as const },
+            ].map(({ label, key }) => {
+              const todaysMeals = mockMeals[dayOfWeek];
+              const meal = todaysMeals?.meals[key];
+              return (
+                <div key={key}>
+                  <div style={{ font: 'var(--type-caption)', color: 'var(--text-faint)', marginBottom: 'var(--space-1)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {label}
+                  </div>
+                  <div style={{ font: 'var(--type-body)', color: key === 'dinner' ? 'var(--text-strong)' : 'var(--text-body)' }}>
+                    {meal || '—'}
+                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: 'var(--text-muted)' }}>Alt ferdig. Det er hele listen.</p>
-          )}
+              );
+            })}
+          </div>
         </Card>
-      </div>
 
-      {/* Right column */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+        {/* Handleliste */}
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
             <h2 style={{ font: 'var(--type-subtitle)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
