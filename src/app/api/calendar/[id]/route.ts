@@ -34,14 +34,20 @@ export async function PATCH(
     const updatePayload: any = {};
     if (summary !== undefined) updatePayload.summary = summary;
     if (start !== undefined) {
-      updatePayload.start = isAllDay
-        ? { date: start }
-        : { dateTime: start, timeZone: 'Europe/Oslo' };
+      if (isAllDay) {
+        updatePayload.start = { date: start };
+      } else {
+        const startDt = new Date(`${start}:00+02:00`);
+        updatePayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
+      }
     }
     if (end !== undefined) {
-      updatePayload.end = !end.includes('T')
-        ? { date: end }
-        : { dateTime: end, timeZone: 'Europe/Oslo' };
+      if (!end.includes('T')) {
+        updatePayload.end = { date: end };
+      } else {
+        const endDt = new Date(`${end}:00+02:00`);
+        updatePayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
+      }
     }
 
     const response = await fetch(

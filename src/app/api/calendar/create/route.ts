@@ -32,7 +32,6 @@ export async function POST(request: Request) {
     const calId = calendarId || 'primary';
     
     const isAllDay = !start.includes('T');
-    console.log('[Calendar Create] start:', start, 'end:', end, 'isAllDay:', isAllDay);
     
     const eventPayload: Record<string, any> = {
       summary,
@@ -47,18 +46,18 @@ export async function POST(request: Request) {
         const endDate = end.includes('T') ? end.slice(0, 10) : end;
         eventPayload.end = { date: endDate };
       }
-      // If no end for all-day, don't include it (Google treats as single-day)
     } else {
-      // Timed event
-      eventPayload.start = { dateTime: start, timeZone: 'Europe/Oslo' };
+      // Timed event: construct ISO string as Oslo time to avoid UTC shift
+      const startDt = new Date(`${start}:00+02:00`);
+      eventPayload.start = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       
       if (end) {
-        eventPayload.end = { dateTime: end, timeZone: 'Europe/Oslo' };
+        const endDt = new Date(`${end}:00+02:00`);
+        eventPayload.end = { dateTime: endDt.toISOString(), timeZone: 'Europe/Oslo' };
       } else {
         // Default end = start + 1 hour
-        const startDate = new Date(start);
-        startDate.setHours(startDate.getHours() + 1);
-        eventPayload.end = { dateTime: startDate.toISOString(), timeZone: 'Europe/Oslo' };
+        startDt.setHours(startDt.getHours() + 1);
+        eventPayload.end = { dateTime: startDt.toISOString(), timeZone: 'Europe/Oslo' };
       }
     }
 
