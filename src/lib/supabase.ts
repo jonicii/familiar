@@ -75,4 +75,11 @@ export interface ListItem {
   checked: boolean;
 }
 
+export interface Meal {
+  id: string;
+  household_id: string;
+  day_of_week: number;
+  dinner: string;
+}
+
 export const TEST_HOUSEHOLD_INVITE_CODE = 'JAKOBSEN2026';

@@ -2,17 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Icon, Input } from '@/components/core';
-import { supabase, Note, Task, List, ListItem, Member, TEST_HOUSEHOLD_INVITE_CODE, signInWithGoogle } from '@/lib/supabase';
-
-const mockMeals = [
-  { day: 'Mandag', meals: { breakfast: 'Kornblanding', lunch: 'Smørbrød', dinner: 'Pasta' } },
-  { day: 'Tirsdag', meals: { breakfast: 'Toast', lunch: 'Suppe', dinner: 'Tacos' } },
-  { day: 'Onsdag', meals: { breakfast: 'Kreps', lunch: 'Salat', dinner: 'Pizza' } },
-  { day: 'Torsdag', meals: { breakfast: 'Yoghurt', lunch: 'Wrap', dinner: 'Curry' } },
-  { day: 'Fredag', meals: { breakfast: 'Egg', lunch: 'Restemat', dinner: 'Fisk & chips' } },
-  { day: 'Lørdag', meals: { breakfast: 'Vafler', lunch: '', dinner: 'Grill' } },
-  { day: 'Søndag', meals: { breakfast: 'Brunch', lunch: '', dinner: 'Stek' } },
-];
+import { supabase, Note, Task, List, ListItem, Member, Meal, TEST_HOUSEHOLD_INVITE_CODE, signInWithGoogle } from '@/lib/supabase';
 
 // Simple bloom animation component
 function Bloom({ open, color = 'var(--person-5)', size = 96 }: { open: boolean; color?: string; size?: number }) {
@@ -71,6 +61,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [listItems, setListItems] = useState<ListItem[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string; allDay?: boolean}[]>([]);
   const [calendarError, setCalendarError] = useState<string | null>(null);
+  const [meals, setMeals] = useState<Meal[]>([]);
   const [calendarId, setCalendarId] = useState<string>('primary');
   const [loading, setLoading] = useState(true);
   
@@ -156,17 +147,19 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
 
       setHouseholdId(household.id);
 
-      const [membersRes, notesRes, tasksRes, listsRes] = await Promise.all([
+      const [membersRes, notesRes, tasksRes, listsRes, mealsRes] = await Promise.all([
         supabase.from('members').select('*').eq('household_id', household.id),
         supabase.from('notes').select('*').eq('household_id', household.id).eq('pinned', true),
         supabase.from('tasks').select('*').eq('household_id', household.id),
         supabase.from('lists').select('*').eq('household_id', household.id),
+        supabase.from('meals').select('*').eq('household_id', household.id),
       ]);
 
       setMembers(membersRes.data || []);
       setNotes(notesRes.data || []);
       setTasks(tasksRes.data || []);
       setLists(listsRes.data || []);
+      setMeals(mealsRes.data || []);
 
       if (listsRes.data && listsRes.data.length > 0) {
         const itemsRes = await supabase
@@ -252,6 +245,18 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
     });
     setNewNoteContent('');
     setShowAddNote(false);
+  };
+
+  const updateDinner = async (dayOfWeek: number, dinner: string) => {
+    if (!householdId) return;
+    const existing = meals.find(m => m.day_of_week === dayOfWeek);
+    if (existing) {
+      await supabase.from('meals').update({ dinner }).eq('id', existing.id);
+      setMeals(meals.map(m => m.day_of_week === dayOfWeek ? { ...m, dinner } : m));
+    } else {
+      const { data } = await supabase.from('meals').insert({ household_id: householdId, day_of_week: dayOfWeek, dinner }).select().single();
+      if (data) setMeals([...meals, data]);
+    }
   };
 
   const openEditModal = (event: {id: string; title: string; start: string; end?: string; allDay?: boolean}) => {
@@ -725,8 +730,43 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
               Middag
             </h2>
           </div>
-          <div style={{ marginTop: 'var(--space-3)', font: 'var(--type-body)', color: 'var(--text-strong)' }}>
-            {mockMeals[dayOfWeek]?.meals.dinner || 'Ingenting planlagt'}
+          <div style={{ marginTop: 'var(--space-3)' }}>
+            {(() => {
+              const todaysDinner = meals.find(m => m.day_of_week === dayOfWeek);
+              const [editing, setEditing] = useState(false);
+              const [value, setValue] = useState(todaysDinner?.dinner || '');
+              
+              if (editing) {
+                return (
+                  <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                    <Input
+                      value={value}
+                      onChange={e => setValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { updateDinner(dayOfWeek, value); setEditing(false); } }}
+                      onBlur={() => { updateDinner(dayOfWeek, value); setEditing(false); }}
+                      autoFocus
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                );
+              }
+              return (
+                <button
+                  onClick={() => { setValue(todaysDinner?.dinner || ''); setEditing(true); }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    font: 'var(--type-body)',
+                    color: todaysDinner?.dinner ? 'var(--text-strong)' : 'var(--text-muted)',
+                  }}
+                >
+                  {todaysDinner?.dinner || 'Klikk for å legge til'}
+                </button>
+              );
+            })()}
           </div>
         </Card>
 
