@@ -253,11 +253,19 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
     if (!householdId) return;
     const existing = meals.find(m => m.day_of_week === dayOfWeek);
     if (existing) {
-      await supabase.from('meals').update({ dinner }).eq('id', existing.id);
-      setMeals(meals.map(m => m.day_of_week === dayOfWeek ? { ...m, dinner } : m));
+      const { error } = await supabase.from('meals').update({ dinner }).eq('id', existing.id);
+      if (error) {
+        console.error('Update dinner error:', error);
+      } else {
+        setMeals(meals.map(m => m.day_of_week === dayOfWeek ? { ...m, dinner } : m));
+      }
     } else {
-      const { data } = await supabase.from('meals').insert({ household_id: householdId, day_of_week: dayOfWeek, dinner }).select().single();
-      if (data) setMeals([...meals, data]);
+      const { data, error } = await supabase.from('meals').insert({ household_id: householdId, day_of_week: dayOfWeek, dinner }).select().single();
+      if (error) {
+        console.error('Insert dinner error:', error);
+      } else if (data) {
+        setMeals([...meals, data]);
+      }
     }
   };
 
