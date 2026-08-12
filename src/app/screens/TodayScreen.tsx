@@ -62,6 +62,8 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
   const [calendarEvents, setCalendarEvents] = useState<{id: string; title: string; start: string; end: string; allDay?: boolean}[]>([]);
   const [calendarError, setCalendarError] = useState<string | null>(null);
   const [meals, setMeals] = useState<Meal[]>([]);
+  const [editingDinner, setEditingDinner] = useState(false);
+  const [dinnerValue, setDinnerValue] = useState('');
   const [calendarId, setCalendarId] = useState<string>('primary');
   const [loading, setLoading] = useState(true);
   
@@ -733,17 +735,15 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
           <div style={{ marginTop: 'var(--space-3)' }}>
             {(() => {
               const todaysDinner = meals.find(m => m.day_of_week === dayOfWeek);
-              const [editing, setEditing] = useState(false);
-              const [value, setValue] = useState(todaysDinner?.dinner || '');
               
-              if (editing) {
+              if (editingDinner) {
                 return (
                   <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                     <Input
-                      value={value}
-                      onChange={e => setValue(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') { updateDinner(dayOfWeek, value); setEditing(false); } }}
-                      onBlur={() => { updateDinner(dayOfWeek, value); setEditing(false); }}
+                      value={dinnerValue}
+                      onChange={e => setDinnerValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { updateDinner(dayOfWeek, dinnerValue); setEditingDinner(false); } }}
+                      onBlur={() => { updateDinner(dayOfWeek, dinnerValue); setEditingDinner(false); }}
                       autoFocus
                       style={{ flex: 1 }}
                     />
@@ -752,7 +752,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
               }
               return (
                 <button
-                  onClick={() => { setValue(todaysDinner?.dinner || ''); setEditing(true); }}
+                  onClick={() => { setDinnerValue(todaysDinner?.dinner || ''); setEditingDinner(true); }}
                   style={{
                     background: 'none',
                     border: 'none',
