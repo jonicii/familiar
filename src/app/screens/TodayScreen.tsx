@@ -760,7 +760,7 @@ export default function TodayScreen({ isMobile = false }: { isMobile?: boolean }
               }
               return (
                 <button
-                  onClick={() => { setDinnerValue(todaysDinner?.dinner || ''); setEditingDinner(true); }}
+                  onClick={(e) => { console.log('Dinner button clicked, existing:', todaysDinner); setDinnerValue(todaysDinner?.dinner || ''); setEditingDinner(true); }}
                   style={{
                     background: 'none',
                     border: 'none',
